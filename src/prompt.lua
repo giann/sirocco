@@ -8,9 +8,10 @@ local colors = term.colors
 local escapeCodes = {
     -- Why do i need to reimplement those ?
     -- I guess they're not escape codes
-    home    = "\1",
-    ["end"] = "\5",
-    clearl  = "\11",
+    home      = "\1",
+    ["end"]   = "\5",
+    clearl    = "\11",
+    backspace = "\127",
 
     left    = "\27[D",
     right   = "\27[C",
@@ -37,28 +38,50 @@ local Prompt = Class {
             [escapeCodes.up]   = false,
             [escapeCodes.down] = false,
             [escapeCodes.left] = function()
-                self.cursorPosition = math.max(1, self.cursorPosition - 1)
-
-                self.output:write(escapeCodes.left)
+                self:moveCursor(-1)
             end,
             [escapeCodes.right] = function()
-                if self.cursorPosition < self.buffer:len() + 1 then
-                    self.cursorPosition = self.cursorPosition + 1
-                    self.output:write(escapeCodes.right)
-                end
+                self:moveCursor(1)
             end,
             [escapeCodes.home] = function()
-                cursor.goleft(self.cursorPosition - 1)
-                self.cursorPosition = 1
+                self:moveCursor(-self.cursorPosition + 1)
             end,
             [escapeCodes.clearl] = function()
                 term.cleareol()
                 self.buffer = ""
             end,
+            [escapeCodes.backspace] = function()
+                self:moveCursor(-1)
+
+                -- Delete char at cursorPosition
+                self.buffer = self.buffer:sub(1, self.cursorPosition - 1)
+                    .. self.buffer:sub(self.cursorPosition + 1)
+
+                -- Move back, erase and print again
+                self:moveCursor(-self.cursorPosition + 1)
+                term.cleareol()
+                self.output:write(self.buffer)
+                self.cursorPosition = self.buffer:len() + 1
+            end
         }
     end
 
 }
+
+function Prompt:moveCursor(chars)
+    if chars > 0 then
+        chars = math.min(self.buffer:len() - self.cursorPosition + 1, chars)
+
+        if chars > 0 then
+            self.cursorPosition = self.cursorPosition + chars
+            cursor.goright(chars)
+        end
+    elseif chars < 0 then
+        chars = math.abs(chars)
+        cursor.goleft(chars)
+        self.cursorPosition = math.max(1, self.cursorPosition - chars)
+    end
+end
 
 function Prompt:readInput()
     if self.input == io.stdin then
@@ -66,10 +89,12 @@ function Prompt:readInput()
         os.execute("/usr/bin/env stty raw opost -echo 2> /dev/null")
     end
 
+    -- Starting reference
+    cursor:save()
+
     local char
     self.buffer = ""
     local escapeCode = ""
-    cursor:save()
     repeat
         char = self.input:read(1)
 
