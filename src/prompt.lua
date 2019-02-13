@@ -51,17 +51,19 @@ local Prompt = Class {
                 self.buffer = ""
             end,
             [escapeCodes.backspace] = function()
-                self:moveCursor(-1)
+                if self.cursorPosition > 1 then
+                    self:moveCursor(-1)
 
-                -- Delete char at cursorPosition
-                self.buffer = self.buffer:sub(1, self.cursorPosition - 1)
-                    .. self.buffer:sub(self.cursorPosition + 1)
+                    -- Delete char at cursorPosition
+                    self.buffer = self.buffer:sub(1, self.cursorPosition - 1)
+                        .. self.buffer:sub(self.cursorPosition + 1)
 
-                -- Move back, erase and print again
-                self:moveCursor(-self.cursorPosition + 1)
-                term.cleareol()
-                self.output:write(self.buffer)
-                self.cursorPosition = self.buffer:len() + 1
+                    -- Move back, erase and print again
+                    self:moveCursor(-self.cursorPosition + 1)
+                    term.cleareol()
+                    self.output:write(self.buffer)
+                    self.cursorPosition = self.buffer:len() + 1
+                end
             end
         }
     end
