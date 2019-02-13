@@ -15,7 +15,8 @@ description = {
 
 build = {
     modules = {
-      ["query"] = "src/init.lua"
+      ["query"]        = "src/init.lua",
+      ["query.prompt"] = "src/prompt.lua"
     },
     type = "builtin",
 }
@@ -25,4 +26,5 @@ dependencies = {
     "arparse >= 0.6.0-1",
     "luafilesystem >= 1.7.0-2",
     "lua-term >= 0.7-1",
+    "hump >= 0.4-2"
 }
