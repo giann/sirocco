@@ -32,10 +32,8 @@ Prompt = Class {
     init = function(self, options)
         self.input       = options.input or io.stdin
         self.output      = options.output or io.stdout
-        self.hidden      = options.hidden or false
-        self.obfuscated  = options.obfuscated or false
         self.prompt      = options.prompt or "> "
-        self.placeholder = options.placeholder or "Type your answer"
+        self.placeholder = options.placeholder or nil
 
         self.buffer = ""
         self.pendingBuffer = ""
@@ -76,7 +74,7 @@ function Prompt:registerKeybinding()
             self:moveCursor(-self.currentPosition.x)
         end,
         [Prompt.escapeCodes["end"]] = function()
-            self.currentPosition.x = self.buffer:len()
+            self.currentPosition.x = utf8.len(self.buffer)
         end,
         [Prompt.escapeCodes.clearl] = function()
             self.buffer = ""
@@ -95,6 +93,8 @@ function Prompt:registerKeybinding()
 end
 
 function Prompt:handleBindings()
+    local binding = self.keybinding[self.pendingBuffer]
+
     local validEscapeCode = false
     local startOfValidEscapeCode = false
     for _, code  in pairs(Prompt.escapeCodes) do
@@ -106,11 +106,9 @@ function Prompt:handleBindings()
         end
     end
 
-    if not validEscapeCode then
+    if not validEscapeCode and not binding then
         return startOfValidEscapeCode and "wait" or false
     end
-
-    local binding = self.keybinding[self.pendingBuffer]
 
     if binding then
         -- We have a binding for it
@@ -142,7 +140,7 @@ end
 
 function Prompt:moveCursor(chars)
     if chars > 0 then
-        chars = math.min(self.buffer:len() - self.currentPosition.x, chars)
+        chars = math.min(utf8.len(self.buffer) - self.currentPosition.x, chars)
 
         if chars > 0 then
             self.currentPosition.x = self.currentPosition.x + chars
@@ -150,6 +148,12 @@ function Prompt:moveCursor(chars)
     elseif chars < 0 then
         self.currentPosition.x = math.max(0, self.currentPosition.x + chars)
     end
+end
+
+function Prompt:processInput(input)
+    self:insertAtCurrentPosition(input)
+
+    self.currentPosition.x = self.currentPosition.x + utf8.len(input)
 end
 
 function Prompt:handleInput()
@@ -160,9 +164,7 @@ function Prompt:handleInput()
     -- Not an escape code
     if handled ~= "consumed"
         and handled ~= "wait" then
-        self:insertAtCurrentPosition(self.pendingBuffer)
-
-        self.currentPosition.x = self.currentPosition.x + self.pendingBuffer:len()
+        self:processInput(self.pendingBuffer)
 
         -- Consume pending
         self.pendingBuffer = ""
@@ -177,10 +179,15 @@ function Prompt:render()
     self.output:write(Prompt.escapeCodes.cleardown)
 
     -- Print prompt
-    self.output:write(self.prompt)
+    self.output:write(
+        colors.bright .. colors.blue
+        .. self.prompt
+        .. colors.reset
+    )
 
     -- Print placeholder
-    if (not self.promptPosition.x or not self.promptPosition.y) and self.buffer:len() == 0 then
+    if self.placeholder
+        and (not self.promptPosition.x or not self.promptPosition.y) and utf8.len(self.buffer) == 0 then
         self.output:write(colors.bright .. colors.black .. (self.placeholder or "") .. colors.reset)
     end
 
@@ -189,7 +196,7 @@ function Prompt:render()
 
     -- First time we need initialize current position
     if not self.promptPosition.x or not self.promptPosition.y then
-        local lastLine
+        local lastLine = ""
         local lines = 0
         -- Maybe the prompt is on several lines
         for line in self.prompt:gmatch("[^\n]*\n(.*)") do
@@ -197,7 +204,11 @@ function Prompt:render()
             lines = lines + 1
         end
 
-        self.promptPosition.x = lastLine:len() + self.startingPosition.x
+        if lines == 0 then
+            lastLine = self.prompt
+        end
+
+        self.promptPosition.x = utf8.len(lastLine) + self.startingPosition.x
         self.promptPosition.y = self.startingPosition.y + lines
     end
 
@@ -231,7 +242,7 @@ function Prompt:setCursor(x, y)
     self.output:write("\27[" .. math.floor(y) .. ";" .. math.floor(x) .. "H")
 end
 
-function Prompt:loop()
+function Prompt:before()
     if self.input == io.stdin then
         -- Raw mode to get chars by chars
         os.execute("/usr/bin/env stty raw opost -echo 2> /dev/null")
@@ -242,6 +253,17 @@ function Prompt:loop()
 
     self.startingPosition.x,
         self.startingPosition.y = self:getCursor()
+end
+
+function Prompt:after()
+    self.output:write("\n")
+
+    -- Restore normal mode
+    os.execute("/usr/bin/env stty sane")
+end
+
+function Prompt:loop()
+    self:before()
 
     repeat
         self:render()
@@ -251,12 +273,11 @@ function Prompt:loop()
         self:update()
     until self:endCondition()
 
-    self.output:write("\n")
+    local result = self:processedResult()
 
-    -- Restore normal mode
-    os.execute("/usr/bin/env stty sane")
+    self:after(result)
 
-    return self:processedResult()
+    return result
 end
 
 return Prompt
