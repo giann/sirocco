@@ -52,6 +52,8 @@ function List:registerKeybinding()
                 self.chosen = {
                     [self.currentChoice] = true
                 }
+
+                self.message = nil
             end
         end,
     }
@@ -98,6 +100,22 @@ function List:render()
     end
 end
 
+function List:renderMessage()
+    if self.message then
+        self:setCursor(
+            1,
+            self.promptPosition.y + self.currentPosition.y + #self.items + 1
+        )
+
+        self.output:write(self.message)
+
+        self:setCursor(
+            self.promptPosition.x + self.currentPosition.x,
+            self.promptPosition.y + self.currentPosition.y
+        )
+    end
+end
+
 function List:processedResult()
     local result = {}
     for i, selected in pairs(self.chosen) do
@@ -113,6 +131,12 @@ function List:endCondition()
     local count = 0
     for _, v in pairs(self.chosen) do
         count = count + (v and 1 or 0)
+    end
+
+    local condition = not self.required or count > 0
+
+    if self.finished and not condition then
+        self.message = colors.red .. "Answer is required" .. colors.reset
     end
 
     self.finished = self.finished and (not self.required or count > 0)

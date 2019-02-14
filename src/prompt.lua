@@ -58,6 +58,9 @@ Prompt = Class {
             y = false
         }
 
+        -- Will be printed below
+        self.message = nil
+
         self:registerKeybinding()
     end
 
@@ -109,7 +112,7 @@ function Prompt:handleBindings()
     if self.pendingBuffer == "\n"
         or self.pendingBuffer == "\r" then
         self.finished = true
-
+        self.pendingBuffer = ""
         return "consumed"
     end
 
@@ -174,6 +177,8 @@ function Prompt:processInput(input)
     self:insertAtCurrentPosition(input)
 
     self.currentPosition.x = self.currentPosition.x + utf8.len(input)
+
+    self.message = nil
 end
 
 function Prompt:handleInput()
@@ -214,7 +219,7 @@ function Prompt:render()
     -- Print current value
     self.output:write(self.buffer)
 
-    -- First time we need initialize current position
+    -- First time we need to initialize current position
     if not self.promptPosition.x or not self.promptPosition.y then
         local lastLine = ""
         local lines = 0
@@ -232,10 +237,28 @@ function Prompt:render()
         self.promptPosition.y = self.startingPosition.y + lines
     end
 
+    self:renderMessage()
+
     self:setCursor(
         self.promptPosition.x + self.currentPosition.x,
         self.promptPosition.y + self.currentPosition.y
     )
+end
+
+function Prompt:renderMessage()
+    if self.message then
+        self:setCursor(
+            1,
+            self.promptPosition.y + self.currentPosition.y + 1
+        )
+
+        self.output:write(self.message)
+
+        self:setCursor(
+            self.promptPosition.x + self.currentPosition.x,
+            self.promptPosition.y + self.currentPosition.y
+        )
+    end
 end
 
 function Prompt:update()
@@ -247,6 +270,12 @@ function Prompt:processedResult()
 end
 
 function Prompt:endCondition()
+    local condition = (not self.required or utf8.len(self.buffer) > 0)
+
+    if self.finished and not condition then
+        self.message = colors.red .. "Answer is required" .. colors.reset
+    end
+
     self.finished = self.finished and (not self.required or utf8.len(self.buffer) > 0)
 
     return self.finished

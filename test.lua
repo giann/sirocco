@@ -5,7 +5,8 @@ local List = require "list"
 
 Prompt {
     prompt = "A simple question\n❱ ",
-    placeholder = "A simple answer"
+    placeholder = "A simple answer",
+    required = true
 }:loop()
 
 List {
@@ -22,8 +23,9 @@ List {
         {
             value = "Ciao",
             label = "Ciao"
-        }
-    }
+        },
+    },
+    required = true
 }:loop()
 
 List {
