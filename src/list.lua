@@ -61,14 +61,6 @@ function List:setCurrentChoice(newChoice)
     self.currentChoice = math.max(1, math.min(#self.items, self.currentChoice + newChoice))
 end
 
-function List:processInput(input)
-    -- We don't care about any input but newline
-    if input == "\n"
-        or input == "\r" then
-        self.finished = true
-    end
-end
-
 function List:render()
     Prompt.render(self)
 
@@ -123,7 +115,7 @@ function List:endCondition()
         count = count + (v and 1 or 0)
     end
 
-    self.finished = self.finished and count > 0
+    self.finished = self.finished and (not self.required or count > 0)
 
     return self.finished
 end

@@ -35,6 +35,11 @@ Prompt = Class {
         self.prompt      = options.prompt or "> "
         self.placeholder = options.placeholder or nil
 
+        self.required = false
+        if options.required ~= nil then
+            self.required = options.required
+        end
+
         self.buffer = ""
         self.pendingBuffer = ""
 
@@ -96,7 +101,16 @@ function Prompt:handleBindings()
     -- Ctrl-c and Ctrl-d interrupt everything
     if self.pendingBuffer == "\3"
         or self.pendingBuffer == "\4" then
+        self:after()
         os.exit()
+    end
+
+    -- New line ends the query
+    if self.pendingBuffer == "\n"
+        or self.pendingBuffer == "\r" then
+        self.finished = true
+
+        return "consumed"
     end
 
     local binding = self.keybinding[self.pendingBuffer]
@@ -233,10 +247,9 @@ function Prompt:processedResult()
 end
 
 function Prompt:endCondition()
-    -- Last char is a newline
-    local lastChar = self.buffer:sub(-1)
-    return lastChar == "\r"
-        or lastChar == "\n"
+    self.finished = self.finished and (not self.required or utf8.len(self.buffer) > 0)
+
+    return self.finished
 end
 
 function Prompt:getCursor()
