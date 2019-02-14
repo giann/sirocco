@@ -1,4 +1,6 @@
 local Class  = require "hump.class"
+
+-- TODO: tui.getnext reads from stdin by default
 local tui    = require "tui"
 
 -- TODO: remove
@@ -17,7 +19,9 @@ Prompt = Class {
         ["end"]   = "\5",
         clearl    = "\11",
         backspace = "\127",
+        tab       = "\t",
 
+        cleardown = "\27[J",
         getcursor = "\27[6n\n",
         left      = "\27[D",
         right     = "\27[C",
@@ -37,13 +41,18 @@ Prompt = Class {
         self.pendingBuffer = ""
 
         self.currentPosition = {
-            x = 1,
-            y = 1
+            x = 0,
+            y = 0
         }
 
         self.startingPosition = {
-            x = 1,
-            y = 1
+            x = false,
+            y = false
+        }
+
+        self.promptPosition = {
+            x = false,
+            y = false
         }
 
         self:registerKeybinding()
@@ -64,18 +73,22 @@ function Prompt:registerKeybinding()
             self:moveCursor(1)
         end,
         [Prompt.escapeCodes.home] = function()
-            self:moveCursor(-self.currentPosition.x + 1)
+            self:moveCursor(-self.currentPosition.x)
+        end,
+        [Prompt.escapeCodes["end"]] = function()
+            self.currentPosition.x = self.buffer:len()
         end,
         [Prompt.escapeCodes.clearl] = function()
             self.buffer = ""
         end,
+        [Prompt.escapeCodes.tab] = false, -- TODO: does weird things
         [Prompt.escapeCodes.backspace] = function()
-            if self.currentPosition.x > 1 then
+            if self.currentPosition.x > 0 then
                 self:moveCursor(-1)
 
                 -- Delete char at currentPosition
-                self.buffer = self.buffer:sub(1, self.currentPosition.x - 1)
-                    .. self.buffer:sub(self.currentPosition.x + 1)
+                self.buffer = self.buffer:sub(1, self.currentPosition.x)
+                    .. self.buffer:sub(self.currentPosition.x + 2)
             end
         end
     }
@@ -119,15 +132,23 @@ function Prompt:handleBindings()
     return "consumed"
 end
 
+function Prompt:insertAtCurrentPosition(text)
+    -- Insert text at currentPosition
+    self.buffer =
+        self.buffer:sub(1, self.currentPosition.x)
+        .. text
+        .. self.buffer:sub(self.currentPosition.x + 1)
+end
+
 function Prompt:moveCursor(chars)
     if chars > 0 then
-        chars = math.min(self.buffer:len() - self.currentPosition.x + 1, chars)
+        chars = math.min(self.buffer:len() - self.currentPosition.x, chars)
 
         if chars > 0 then
             self.currentPosition.x = self.currentPosition.x + chars
         end
     elseif chars < 0 then
-        self.currentPosition.x = math.max(1, self.currentPosition.x - chars)
+        self.currentPosition.x = math.max(0, self.currentPosition.x + chars)
     end
 end
 
@@ -139,11 +160,7 @@ function Prompt:handleInput()
     -- Not an escape code
     if handled ~= "consumed"
         and handled ~= "wait" then
-        -- Insert text at currentPosition
-        self.buffer =
-            self.buffer:sub(1, self.currentPosition.x - 1)
-            .. self.pendingBuffer
-            .. self.buffer:sub(self.currentPosition.x)
+        self:insertAtCurrentPosition(self.pendingBuffer)
 
         self.currentPosition.x = self.currentPosition.x + self.pendingBuffer:len()
 
@@ -157,30 +174,36 @@ function Prompt:render()
     self:setCursor(self.startingPosition.x, self.startingPosition.y)
 
     -- Clear down
-    self.output:write("\27[J")
+    self.output:write(Prompt.escapeCodes.cleardown)
 
     -- Print prompt
     self.output:write(self.prompt)
 
     -- Print placeholder
-    if self.currentPosition.x == 1 and self.buffer:len() == 0 then
+    if (not self.promptPosition.x or not self.promptPosition.y) and self.buffer:len() == 0 then
         self.output:write(colors.bright .. colors.black .. (self.placeholder or "") .. colors.reset)
     end
 
     -- Print current value
     self.output:write(self.buffer)
 
-    -- Maybe the prompt is on several lines
-    local lastLine
-    local lines = 0
-    for line in self.prompt:gmatch("[^\n]*\n(.*)") do
-        lastLine = line
-        lines = lines + 1
+    -- First time we need initialize current position
+    if not self.promptPosition.x or not self.promptPosition.y then
+        local lastLine
+        local lines = 0
+        -- Maybe the prompt is on several lines
+        for line in self.prompt:gmatch("[^\n]*\n(.*)") do
+            lastLine = line
+            lines = lines + 1
+        end
+
+        self.promptPosition.x = lastLine:len() + self.startingPosition.x
+        self.promptPosition.y = self.startingPosition.y + lines
     end
 
     self:setCursor(
-        lastLine:len() + self.currentPosition.x,
-        self.startingPosition.y + lines
+        self.promptPosition.x + self.currentPosition.x,
+        self.promptPosition.y + self.currentPosition.y
     )
 end
 
@@ -217,11 +240,8 @@ function Prompt:loop()
     -- Get current position
     self.output:write(Prompt.escapeCodes.getcursor)
 
-    self.currentPosition.x,
-        self.currentPosition.y = self:getCursor()
-
-    self.startingPosition.x = self.currentPosition.x
-    self.startingPosition.y = self.currentPosition.y
+    self.startingPosition.x,
+        self.startingPosition.y = self:getCursor()
 
     repeat
         self:render()
