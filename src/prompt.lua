@@ -93,6 +93,12 @@ function Prompt:registerKeybinding()
 end
 
 function Prompt:handleBindings()
+    -- Ctrl-c and Ctrl-d interrupt everything
+    if self.pendingBuffer == "\3"
+        or self.pendingBuffer == "\4" then
+        os.exit()
+    end
+
     local binding = self.keybinding[self.pendingBuffer]
 
     local validEscapeCode = false
