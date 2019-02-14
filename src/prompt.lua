@@ -1,6 +1,8 @@
 local Class  = require "hump.class"
+local tui    = require "tui"
+
+-- TODO: remove
 local term   = require "term"
-local cursor = term.cursor
 local colors = term.colors
 
 local Prompt
@@ -16,6 +18,7 @@ Prompt = Class {
         clearl    = "\11",
         backspace = "\127",
 
+        getcursor = "\27[6n\n",
         left      = "\27[D",
         right     = "\27[C",
         down      = "\27[B",
@@ -23,15 +26,25 @@ Prompt = Class {
     },
 
     init = function(self, options)
-        self.input = options.input or io.stdin
-        self.output = options.output or io.stdout
-        self.hidden = options.hidden or false
-        self.obfuscated = options.obfuscated or false
-        self.prompt = options.prompt or "> "
+        self.input       = options.input or io.stdin
+        self.output      = options.output or io.stdout
+        self.hidden      = options.hidden or false
+        self.obfuscated  = options.obfuscated or false
+        self.prompt      = options.prompt or "> "
         self.placeholder = options.placeholder or "Type your answer"
 
-        self.buffer = nil
-        self.cursorPosition = 1
+        self.buffer = ""
+        self.pendingBuffer = ""
+
+        self.currentPosition = {
+            x = 1,
+            y = 1
+        }
+
+        self.startingPosition = {
+            x = 1,
+            y = 1
+        }
 
         self:registerKeybinding()
     end
@@ -51,140 +64,31 @@ function Prompt:registerKeybinding()
             self:moveCursor(1)
         end,
         [Prompt.escapeCodes.home] = function()
-            self:moveCursor(-self.cursorPosition + 1)
+            self:moveCursor(-self.currentPosition.x + 1)
         end,
         [Prompt.escapeCodes.clearl] = function()
-            term.cleareol()
             self.buffer = ""
         end,
         [Prompt.escapeCodes.backspace] = function()
-            if self.cursorPosition > 1 then
+            if self.currentPosition.x > 1 then
                 self:moveCursor(-1)
 
-                -- Delete char at cursorPosition
-                self.buffer = self.buffer:sub(1, self.cursorPosition - 1)
-                    .. self.buffer:sub(self.cursorPosition + 1)
-
-                -- Move back, erase and print again
-                self:moveCursor(-self.cursorPosition + 1)
-                term.cleareol()
-                self.output:write(self.buffer)
-                self.cursorPosition = self.buffer:len() + 1
+                -- Delete char at currentPosition
+                self.buffer = self.buffer:sub(1, self.currentPosition.x - 1)
+                    .. self.buffer:sub(self.currentPosition.x + 1)
             end
         end
     }
 end
 
-function Prompt:moveCursor(chars)
-    if chars > 0 then
-        chars = math.min(self.buffer:len() - self.cursorPosition + 1, chars)
-
-        if chars > 0 then
-            self.cursorPosition = self.cursorPosition + chars
-            cursor.goright(chars)
-        end
-    elseif chars < 0 then
-        chars = math.abs(chars)
-        cursor.goleft(chars)
-        self.cursorPosition = math.max(1, self.cursorPosition - chars)
-    end
-end
-
-function Prompt:readInput()
-    if self.input == io.stdin then
-        -- Raw mode to get chars by chars
-        os.execute("/usr/bin/env stty raw opost -echo 2> /dev/null")
-    end
-
-    -- Starting reference
-    cursor:save()
-
-    local char
-    self.buffer = ""
-    local escapeCode = ""
-    repeat
-        char = self.input:read(1)
-
-        escapeCode = escapeCode .. char
-
-        local handledEscapeCode = self:handleEscapeCode(escapeCode)
-        if handledEscapeCode == "consumed" then
-            -- Escape code was consumed
-            escapeCode = ""
-        elseif handledEscapeCode ~= "wait"
-            and self:filterInput(escapeCode) then
-            -- Not an escape code
-
-            -- Insert text at cursorPosition
-            self.buffer =
-                self.buffer:sub(1, self.cursorPosition - 1)
-                .. escapeCode
-                .. self.buffer:sub(self.cursorPosition)
-
-            -- TODO: take self.hidden into account
-            local value = escapeCode
-                .. self.buffer:sub(self.cursorPosition + 1)
-
-            self.output:write(
-                self.hidden
-                    and ""
-                    or (self.obfuscated
-                            and ("*"):rep(#value)
-                            or value))
-            cursor:restore()
-            cursor.goright(self.cursorPosition)
-            self.cursorPosition = self.cursorPosition + #escapeCode
-
-            escapeCode = ""
-        end
-
-        if self.placeholder and self.buffer:len() > 0 then
-            self.placeholder = nil
-            term.cleareol()
-        end
-    until char == "\r" -- Stop on newline
-        or char == "\n"
-
-    -- Restore normal mode
-    os.execute("/usr/bin/env stty sane")
-
-    local result = self.buffer
-
-    self.buffer = nil
-
-    return result
-end
-
-function Prompt:filterInput(input)
-    return true
-end
-
-function Prompt:validateInput(input)
-    return true
-end
-
-function Prompt:query()
-    self.output:write(self.prompt)
-
-    cursor:save()
-    self.output:write(colors.bright .. colors.black .. (self.placeholder or "") .. colors.reset)
-    cursor:restore()
-
-    local input = self:readInput()
-
-    self.output:write "\n"
-
-    return self:validateInput(input) and input or nil
-end
-
-function Prompt:handleEscapeCode(escapeCode)
+function Prompt:handleBindings()
     local validEscapeCode = false
     local startOfValidEscapeCode = false
     for _, code  in pairs(Prompt.escapeCodes) do
-        if code == escapeCode then
+        if code == self.pendingBuffer then
             validEscapeCode = true
             break
-        elseif escapeCode == code:sub(1, #escapeCode) then
+        elseif self.pendingBuffer == code:sub(1, #self.pendingBuffer) then
             startOfValidEscapeCode = true
         end
     end
@@ -193,35 +97,146 @@ function Prompt:handleEscapeCode(escapeCode)
         return startOfValidEscapeCode and "wait" or false
     end
 
-    local binding = self.keybinding[escapeCode]
+    local binding = self.keybinding[self.pendingBuffer]
 
     if binding then
+        -- We have a binding for it
         if type(binding) == "function" then
             binding()
+        -- We don't have a binding for it but we don't want it in the buffer
         else
-            -- Forward it
-            self.output:write(escapeCode)
+            self.output:write(self.pendingBuffer)
         end
+    -- We don't handle it at all, it'll be printed and in the buffer
     elseif binding == nil then
-        -- Not handled let it be
         return false
     end
 
-    -- binding == false -> blacklisted
+    -- If binding == false, we blacklisted it: do nothing
+
+    -- If we reach here, escape code was consumed
+    self.pendingBuffer = ""
     return "consumed"
 end
 
-local answer = Prompt {
-    prompt = "A simple question\n> ",
-    placeholder = "A simple answer"
-}:query()
+function Prompt:moveCursor(chars)
+    if chars > 0 then
+        chars = math.min(self.buffer:len() - self.currentPosition.x + 1, chars)
 
-term.cleareol()
-
-print("Answer was:")
-for i = 1, #answer do
-    io.write(answer:sub(i, i):byte() .. " [" .. answer:sub(i, i) .. "] ")
+        if chars > 0 then
+            self.currentPosition.x = self.currentPosition.x + chars
+        end
+    elseif chars < 0 then
+        self.currentPosition.x = math.max(1, self.currentPosition.x - chars)
+    end
 end
-print()
+
+function Prompt:handleInput()
+    self.pendingBuffer = self.pendingBuffer .. tui.getnext()
+
+    local handled = self:handleBindings()
+
+    -- Not an escape code
+    if handled ~= "consumed"
+        and handled ~= "wait" then
+        -- Insert text at currentPosition
+        self.buffer =
+            self.buffer:sub(1, self.currentPosition.x - 1)
+            .. self.pendingBuffer
+            .. self.buffer:sub(self.currentPosition.x)
+
+        self.currentPosition.x = self.currentPosition.x + self.pendingBuffer:len()
+
+        -- Consume pending
+        self.pendingBuffer = ""
+    end
+end
+
+function Prompt:render()
+    -- Go back to start
+    self:setCursor(self.startingPosition.x, self.startingPosition.y)
+
+    -- Clear down
+    self.output:write("\27[J")
+
+    -- Print prompt
+    self.output:write(self.prompt)
+
+    -- Print placeholder
+    if self.currentPosition.x == 1 and self.buffer:len() == 0 then
+        self.output:write(colors.bright .. colors.black .. (self.placeholder or "") .. colors.reset)
+    end
+
+    -- Print current value
+    self.output:write(self.buffer)
+
+    -- Maybe the prompt is on several lines
+    local lastLine
+    local lines = 0
+    for line in self.prompt:gmatch("[^\n]*\n(.*)") do
+        lastLine = line
+        lines = lines + 1
+    end
+
+    self:setCursor(
+        lastLine:len() + self.currentPosition.x,
+        self.startingPosition.y + lines
+    )
+end
+
+function Prompt:update()
+end
+
+function Prompt:processedResult()
+    -- Remove trailing newline char
+    return self.buffer:sub(1, -2)
+end
+
+function Prompt:endCondition()
+    -- Last char is a newline
+    local lastChar = self.buffer:sub(-1)
+    return lastChar == "\r"
+        or lastChar == "\n"
+end
+
+function Prompt:getCursor()
+    local y, x  = tui.getnext():match("([0-9]*);([0-9]*)")
+    return tonumber(x), tonumber(y)
+end
+
+function Prompt:setCursor(x, y)
+    self.output:write("\27[" .. math.floor(y) .. ";" .. math.floor(x) .. "H")
+end
+
+function Prompt:loop()
+    if self.input == io.stdin then
+        -- Raw mode to get chars by chars
+        os.execute("/usr/bin/env stty raw opost -echo 2> /dev/null")
+    end
+
+    -- Get current position
+    self.output:write(Prompt.escapeCodes.getcursor)
+
+    self.currentPosition.x,
+        self.currentPosition.y = self:getCursor()
+
+    self.startingPosition.x = self.currentPosition.x
+    self.startingPosition.y = self.currentPosition.y
+
+    repeat
+        self:render()
+
+        self:handleInput()
+
+        self:update()
+    until self:endCondition()
+
+    self.output:write("\n")
+
+    -- Restore normal mode
+    os.execute("/usr/bin/env stty sane")
+
+    return self:processedResult()
+end
 
 return Prompt

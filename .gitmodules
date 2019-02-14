@@ -1,0 +1,3 @@
+[submodule "lib/tui"]
+	path = lib/tui
+	url = git@github.com:daurnimator/lua-tui.git

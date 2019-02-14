@@ -24,11 +24,11 @@ local List = Class {
 function List:registerKeybinding()
     self.keybinding = {
         [Prompt.escapeCodes.up] = function()
-            self.currentChoice = math.max(1, self.currentChoice - 1)
+            self:setChoice(-1)
         end,
 
         [Prompt.escapeCodes.down] = function()
-            self.currentChoice = math.min(#self.items, self.currentChoice + 1)
+            self:setChoice(1)
         end,
 
         [Prompt.escapeCodes.backspace] = false,
@@ -38,6 +38,15 @@ function List:registerKeybinding()
         [Prompt.escapeCodes.home]      = false,
         [Prompt.escapeCodes.clearl]    = false,
     }
+end
+
+function List:setChoice(newChoice)
+    local current = self.currentChoice
+    self.currentChoice = math.max(1, math.min(#self.items, self.currentChoice + newChoice))
+
+    if current ~= self.currentChoice then
+        
+    end
 end
 
 -- No input possible except for up/down escape sequences
