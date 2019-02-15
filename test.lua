@@ -12,7 +12,20 @@ Prompt {
 Prompt {
     prompt = "Another question\n❱ ",
     default = "With a default answer",
-    required = true
+}:loop()
+
+Prompt {
+    prompt = "What programming languages do you know ?\n❱ ",
+    placeholder = "Try tab to get some suggestions...",
+    possibleValues = {
+        "lua",
+        "c",
+        "javascript",
+        "php",
+        "python",
+        "rust",
+        "go"
+    }
 }:loop()
 
 List {

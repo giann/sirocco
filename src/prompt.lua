@@ -13,14 +13,6 @@ Prompt = Class {
     -- If not in here, won't be recognized
     -- TODO: get current terminfo instead
     escapeCodes = {
-        -- Why do i need to reimplement those ?
-        -- I guess they're not escape codes
-        home      = "\1",
-        ["end"]   = "\5",
-        clearl    = "\11",
-        backspace = "\127",
-        tab       = "\t",
-
         cleardown = "\27[J",
         getcursor = "\27[6n\n",
         left      = "\27[D",
@@ -30,10 +22,11 @@ Prompt = Class {
     },
 
     init = function(self, options)
-        self.input       = options.input or io.stdin
-        self.output      = options.output or io.stdout
-        self.prompt      = options.prompt or "> "
-        self.placeholder = options.placeholder
+        self.input          = options.input or io.stdin
+        self.output         = options.output or io.stdout
+        self.prompt         = options.prompt or "> "
+        self.placeholder    = options.placeholder
+        self.possibleValues = options.possibleValues or {}
 
         self.required = false
         if options.required ~= nil then
@@ -78,17 +71,19 @@ function Prompt:registerKeybinding()
         [Prompt.escapeCodes.right] = function()
             self:moveCursor(1)
         end,
-        [Prompt.escapeCodes.home] = function()
+        ["\1"] = function() -- Home
             self:moveCursor(-self.currentPosition.x)
         end,
-        [Prompt.escapeCodes["end"]] = function()
+        ["\5"] = function() -- End
             self.currentPosition.x = utf8.len(self.buffer)
         end,
-        [Prompt.escapeCodes.clearl] = function()
+        ["\11"] = function() -- Clear line
             self.buffer = ""
         end,
-        [Prompt.escapeCodes.tab] = false, -- TODO: does weird things
-        [Prompt.escapeCodes.backspace] = function()
+        ["\9"] = function() -- Tab
+            self:complete()
+        end,
+        ["\127"] = function() -- Backspace
             if self.currentPosition.x > 0 then
                 self:moveCursor(-1)
 
@@ -98,6 +93,26 @@ function Prompt:registerKeybinding()
             end
         end
     }
+end
+
+function Prompt:complete()
+    if #self.possibleValues > 0 then
+        local matches = {}
+        local count = 0
+        for _, value in ipairs(self.possibleValues) do
+            if value:sub(1, #self.buffer) == self.buffer then
+                table.insert(matches, value)
+                count = count + 1
+            end
+        end
+
+        if count > 1 then
+            self.message = table.concat(matches, " ")
+        elseif count == 1 then
+            self.buffer = matches[1]
+            self.currentPosition.x = utf8.len(self.buffer)
+        end
+    end
 end
 
 function Prompt:handleBindings()

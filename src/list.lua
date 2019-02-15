@@ -62,6 +62,9 @@ function List:registerKeybinding()
     }
 end
 
+function List:complete()
+end
+
 function List:setCurrentChoice(newChoice)
     self.currentChoice = math.max(1, math.min(#self.items, self.currentChoice + newChoice))
 end
