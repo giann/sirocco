@@ -22,11 +22,13 @@ Prompt = Class {
     },
 
     init = function(self, options)
-        self.input          = options.input or io.stdin
-        self.output         = options.output or io.stdout
-        self.prompt         = options.prompt or "> "
-        self.placeholder    = options.placeholder
-        self.possibleValues = options.possibleValues or {}
+        self.input               = options.input or io.stdin
+        self.output              = options.output or io.stdout
+        self.prompt              = options.prompt or "> "
+        self.placeholder         = options.placeholder
+        self.possibleValues      = options.possibleValues or {}
+        self.pattern             = options.pattern
+        self.patternErrorMessage = options.patternErrorMessage
 
         self.required = false
         if options.required ~= nil then
@@ -194,6 +196,12 @@ function Prompt:processInput(input)
     self.currentPosition.x = self.currentPosition.x + utf8.len(input)
 
     self.message = nil
+
+    if utf8.len(self.buffer > 0)
+        and self.pattern
+        and not self.buffer:match(self.pattern) then
+        self.message = colors.yellow .. (self.patternErrorMessage or "Invalid answer") .. colors.reset
+    end
 end
 
 function Prompt:handleInput()

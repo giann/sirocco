@@ -5,19 +5,19 @@ local List     = require "list"
 local Password = require "password"
 
 Prompt {
-    prompt = "A simple question\n❱ ",
+    prompt      = "A simple question\n❱ ",
     placeholder = "A simple answer",
-    required = true
+    required    = true
 }:loop()
 
 Prompt {
-    prompt = "Another question\n❱ ",
+    prompt  = "Another question\n❱ ",
     default = "With a default answer",
 }:loop()
 
 Prompt {
-    prompt = "What programming languages do you know ?\n❱ ",
-    placeholder = "Try tab to get some suggestions...",
+    prompt         = "What programming languages do you know ?\n❱ ",
+    placeholder    = "Try tab to get some suggestions...",
     possibleValues = {
         "lua",
         "c",
@@ -30,8 +30,9 @@ Prompt {
 }:loop()
 
 List {
-    prompt = "How do you say 'Hello'?",
-    items = {
+    prompt   = "How do you say 'Hello'?",
+    required = true,
+    items    = {
         {
             value = "Hello",
             label = "Hello"
@@ -45,12 +46,13 @@ List {
             label = "Ciao"
         },
     },
-    required = true
 }:loop()
 
 List {
-    prompt = "Here's a list with some already selected options:",
-    items = {
+    prompt   = "Here's a list with some already selected options:",
+    default  = { 2, 4 },
+    required = true,
+    items    = {
         {
             value = "First",
             label = "First"
@@ -68,13 +70,12 @@ List {
             label = "Fourth"
         },
     },
-    default = { 2, 4 },
-    required = true
 }:loop()
 
 List {
-    prompt = "Where are you from?",
-    items = {
+    prompt   = "Where are you from?",
+    multiple = false,
+    items    = {
         {
             value = "New York",
             label = "New York"
@@ -88,9 +89,15 @@ List {
             label = "Rome"
         }
     },
-    multiple = false
 }:loop()
 
 Password {
     prompt = "Enter your secret\n❱ ",
+}:loop()
+
+Prompt {
+    prompt              = "What's your birthday?\n❱ ",
+    placeholder         = "YYYY-mm-dd",
+    pattern             = "[1-9][0-9][0-9][0-9]%-[0-9][0-9]%-[0-9][0-9]",
+    patternErrorMessage = "Not a valid date!"
 }:loop()
