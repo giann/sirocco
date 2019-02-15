@@ -28,6 +28,7 @@ Prompt = Class {
         self.placeholder         = options.placeholder
         self.possibleValues      = options.possibleValues or {}
         self.validator           = options.validator
+        self.filter              = options.filter
 
         self.required = false
         if options.required ~= nil then
@@ -190,6 +191,10 @@ function Prompt:moveCursor(chars)
 end
 
 function Prompt:processInput(input)
+    input = self.filter
+        and self.filter(input)
+        or input
+
     self:insertAtCurrentPosition(input)
 
     self.currentPosition.x = self.currentPosition.x + utf8.len(input)

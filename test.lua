@@ -116,3 +116,12 @@ Prompt {
         end
     end
 }:loop()
+
+Prompt {
+    prompt = "Only numbers allowed\n❱ ",
+    filter = function(input)
+        return input:match("%d")
+            and input
+            or ""
+    end
+}:loop()
