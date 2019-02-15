@@ -6,9 +6,8 @@ local Password = require "password"
 local Confirm  = require "confirm"
 local colors   = require "term".colors
 
-Confirm {
-    prompt = "All finished?"
-}:ask()
+-- Clear whole screen for demo
+io.write("\27[2J\27[1;1H")
 
 Prompt {
     prompt      = "A simple question\n❱ ",
@@ -156,4 +155,8 @@ Prompt {
             and input
             or ""
     end
+}:ask()
+
+Confirm {
+    prompt = "All finished?"
 }:ask()

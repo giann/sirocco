@@ -1,9 +1,6 @@
 # lua-query
-A collection of useful cli prompts
+Lua prompt system
 
-## Todo
-
-- Form (multiple query at once)
-
-## References
-- http://www.termsys.demon.co.uk/vtansi.htm
+<p align="center">
+    <img src="https://github.com/giann/lua-query/raw/master/example.gif" alt="lua-query">
+</p>
