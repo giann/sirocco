@@ -1,9 +1,10 @@
-package.path = package.path .. ";src/?.lua;lib/tui/?/init.lua;lib/tui/?.lua"
+package.path = package.path .. ";./?/init.lua"
 
-local Prompt   = require "prompt"
-local List     = require "list"
-local Password = require "password"
-local Confirm  = require "confirm"
+local sirocco  = require "sirocco"
+local Prompt   = sirocco.prompt
+local List     = sirocco.list
+local Password = sirocco.password
+local Confirm  = sirocco.confirm
 local colors   = require "term".colors
 
 -- Clear whole screen for demo
