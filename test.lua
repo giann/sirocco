@@ -1,7 +1,8 @@
 package.path = package.path .. ";src/?.lua;lib/tui/?/init.lua;lib/tui/?.lua"
 
-local Prompt = require "prompt"
-local List = require "list"
+local Prompt   = require "prompt"
+local List     = require "list"
+local Password = require "password"
 
 Prompt {
     prompt = "A simple question\n❱ ",
@@ -88,4 +89,8 @@ List {
         }
     },
     multiple = false
+}:loop()
+
+Password {
+    prompt = "Enter your secret\n❱ ",
 }:loop()
