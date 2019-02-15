@@ -38,7 +38,9 @@ end
 function Password:processInput(input)
     Prompt.processInput(self, input)
 
-    self.currentPosition.x = 0
+    if self.hidden then
+        self.currentPosition.x = 0
+    end
 end
 
 function Password:complete()

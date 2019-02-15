@@ -27,6 +27,7 @@ Prompt = Class {
         self.prompt              = options.prompt or "> "
         self.placeholder         = options.placeholder
         self.possibleValues      = options.possibleValues or {}
+        self.showPossibleValues  = options.showPossibleValues
         self.validator           = options.validator
         self.filter              = options.filter
 
@@ -113,6 +114,11 @@ function Prompt:complete()
         elseif count == 1 then
             self.buffer = matches[1]
             self.currentPosition.x = utf8.len(self.buffer)
+
+            if self.validator then
+                local _, message = self.validator(self.buffer)
+                self.message = message
+            end
         end
     end
 end
@@ -199,7 +205,10 @@ function Prompt:processInput(input)
 
     self.currentPosition.x = self.currentPosition.x + utf8.len(input)
 
-    self.message = self.validator and self.validator(self.buffer)
+    if self.validator then
+        local _, message = self.validator(self.buffer)
+        self.message = message
+    end
 end
 
 function Prompt:handleInput()
@@ -224,10 +233,17 @@ function Prompt:render()
     -- Clear down
     self.output:write(Prompt.escapeCodes.cleardown)
 
+    local inlinePossibleValues = self.showPossibleValues and #self.possibleValues > 0
+        and " ("
+            .. table.concat(self.possibleValues, ", ")
+            .. ") "
+        or ""
+
     -- Print prompt
     self.output:write(
         colors.bright .. colors.blue
         .. self.prompt
+        .. inlinePossibleValues
         .. colors.reset
     )
 
@@ -255,7 +271,7 @@ function Prompt:render()
             lastLine = self.prompt
         end
 
-        self.promptPosition.x = utf8.len(lastLine) + self.startingPosition.x
+        self.promptPosition.x = utf8.len(inlinePossibleValues) + utf8.len(lastLine) + self.startingPosition.x
         self.promptPosition.y = self.startingPosition.y + lines
     end
 
@@ -292,13 +308,17 @@ function Prompt:processedResult()
 end
 
 function Prompt:endCondition()
-    local condition = (not self.required or utf8.len(self.buffer) > 0)
-
-    if self.finished and not condition then
+    if self.finished and self.required and utf8.len(self.buffer) == 0 then
+        self.finished = false
         self.message = colors.red .. "Answer is required" .. colors.reset
     end
 
-    self.finished = self.finished and (not self.required or utf8.len(self.buffer) > 0)
+    -- Only validate if required or if something is in the buffer
+    if self.finished and self.validator and (self.required or utf8.len(self.buffer) > 0) then
+        local ok, message = self.validator(self.buffer)
+        self.finished = self.finished and ok
+        self.message = message
+    end
 
     return self.finished
 end
@@ -332,7 +352,7 @@ function Prompt:after()
     os.execute("/usr/bin/env stty sane")
 end
 
-function Prompt:loop()
+function Prompt:ask()
     self:before()
 
     repeat

@@ -9,12 +9,12 @@ Prompt {
     prompt      = "A simple question\n❱ ",
     placeholder = "A simple answer",
     required    = true
-}:loop()
+}:ask()
 
 Prompt {
     prompt  = "Another question\n❱ ",
     default = "With a default answer",
-}:loop()
+}:ask()
 
 Prompt {
     prompt         = "What programming languages do you know ?\n❱ ",
@@ -28,7 +28,32 @@ Prompt {
         "rust",
         "go"
     }
-}:loop()
+}:ask()
+
+Prompt {
+    prompt            = "What's you education level?",
+    showPossibleValues = true,
+    possibleValues = {
+        "highschool",
+        "college",
+        "doctorate"
+    },
+    validator = function(buffer)
+        local ok = false
+        for _, v in ipairs {
+            "highschool",
+            "college",
+            "doctorate"
+        } do
+            if v == buffer then
+                ok = true
+                break
+            end
+        end
+
+        return ok, not ok and colors.red .. "Not a valid answer" .. colors.reset
+    end
+}:ask()
 
 List {
     prompt   = "How do you say 'Hello'?",
@@ -47,7 +72,7 @@ List {
             label = "Ciao"
         },
     },
-}:loop()
+}:ask()
 
 List {
     prompt   = "Here's a list with some already selected options:",
@@ -71,7 +96,7 @@ List {
             label = "Fourth"
         },
     },
-}:loop()
+}:ask()
 
 List {
     prompt   = "Where are you from?",
@@ -90,16 +115,16 @@ List {
             label = "Rome"
         }
     },
-}:loop()
+}:ask()
 
 Password {
     prompt = "Enter your secret\n❱ ",
-}:loop()
+}:ask()
 
 Password {
     prompt = "Enter your secret (hidden answer)\n❱ ",
     hidden = true
-}:loop()
+}:ask()
 
 Prompt {
     prompt      = "What's your birthday?\n❱ ",
@@ -111,11 +136,13 @@ Prompt {
             if matches[1] == nil
                 or tonumber(matches[2]) > 12
                 or tonumber(matches[3]) > 31 then
-                return colors.yellow .. "Not a valid date!" .. colors.reset
+                return false, colors.yellow .. "Not a valid date!" .. colors.reset
             end
         end
+
+        return true
     end
-}:loop()
+}:ask()
 
 Prompt {
     prompt = "Only numbers allowed\n❱ ",
@@ -124,4 +151,4 @@ Prompt {
             and input
             or ""
     end
-}:loop()
+}:ask()
