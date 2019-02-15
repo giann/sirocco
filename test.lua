@@ -3,7 +3,12 @@ package.path = package.path .. ";src/?.lua;lib/tui/?/init.lua;lib/tui/?.lua"
 local Prompt   = require "prompt"
 local List     = require "list"
 local Password = require "password"
+local Confirm  = require "confirm"
 local colors   = require "term".colors
+
+Confirm {
+    prompt = "All finished?"
+}:ask()
 
 Prompt {
     prompt      = "A simple question\n❱ ",

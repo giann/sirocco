@@ -3,8 +3,6 @@ A collection of useful cli prompts
 
 ## Todo
 
-### Required
-- Yes/No
 - Form (multiple query at once)
 
 ## References

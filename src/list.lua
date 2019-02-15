@@ -167,7 +167,7 @@ function List:after(result)
     -- Clear down
     self.output:write(Prompt.escapeCodes.cleardown)
 
-    self.output:write(" " .. (#result == 1 and result[1] or table.concat(result, ", ")))
+    self.output:write(" " .. (#result == 1 and tostring(result[1]) or table.concat(result, ", ")))
 
     -- Show cursor
     self.output:write("\27[?25h")
