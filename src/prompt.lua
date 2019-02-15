@@ -27,8 +27,7 @@ Prompt = Class {
         self.prompt              = options.prompt or "> "
         self.placeholder         = options.placeholder
         self.possibleValues      = options.possibleValues or {}
-        self.pattern             = options.pattern
-        self.patternErrorMessage = options.patternErrorMessage
+        self.validator           = options.validator
 
         self.required = false
         if options.required ~= nil then
@@ -195,13 +194,7 @@ function Prompt:processInput(input)
 
     self.currentPosition.x = self.currentPosition.x + utf8.len(input)
 
-    self.message = nil
-
-    if utf8.len(self.buffer > 0)
-        and self.pattern
-        and not self.buffer:match(self.pattern) then
-        self.message = colors.yellow .. (self.patternErrorMessage or "Invalid answer") .. colors.reset
-    end
+    self.message = self.validator and self.validator(self.buffer)
 end
 
 function Prompt:handleInput()

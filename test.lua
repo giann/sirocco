@@ -3,6 +3,7 @@ package.path = package.path .. ";src/?.lua;lib/tui/?/init.lua;lib/tui/?.lua"
 local Prompt   = require "prompt"
 local List     = require "list"
 local Password = require "password"
+local colors   = require "term".colors
 
 Prompt {
     prompt      = "A simple question\n❱ ",
@@ -96,8 +97,17 @@ Password {
 }:loop()
 
 Prompt {
-    prompt              = "What's your birthday?\n❱ ",
-    placeholder         = "YYYY-mm-dd",
-    pattern             = "[1-9][0-9][0-9][0-9]%-[0-9][0-9]%-[0-9][0-9]",
-    patternErrorMessage = "Not a valid date!"
+    prompt      = "What's your birthday?\n❱ ",
+    placeholder = "YYYY-mm-dd",
+    validator   = function(buffer)
+        if utf8.len(buffer) > 0 then
+            local matches = { buffer:match("([1-9][0-9][0-9][0-9])%-([0-1][0-9])%-([0-3][0-9])") }
+
+            if matches[1] == nil
+                or tonumber(matches[2]) > 12
+                or tonumber(matches[3]) > 31 then
+                return colors.yellow .. "Not a valid date!" .. colors.reset
+            end
+        end
+    end
 }:loop()
