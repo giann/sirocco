@@ -122,6 +122,9 @@ function List:renderMessage()
     end
 end
 
+function List:processInput(input)
+end
+
 function List:processedResult()
     local result = {}
     for i, selected in pairs(self.chosen) do
