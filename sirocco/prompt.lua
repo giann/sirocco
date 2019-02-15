@@ -1,8 +1,8 @@
 local Class  = require "hump.class"
 
 -- TODO: tui.getnext reads from stdin by default
-local tui    = require "tui"
-local tparm  = require "tui.tparm".tparm
+local tui    = require "sirocco.tui"
+local tparm  = require "sirocco.tui.tparm".tparm
 
 -- TODO: remove
 local term   = require "term"

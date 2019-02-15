@@ -1,8 +1,8 @@
 local Class  = require "hump.class"
 local colors = require "term".colors
 
-local Prompt = require "prompt"
-local List   = require "list"
+local Prompt = require "sirocco.prompt"
+local List   = require "sirocco.list"
 
 local Confirm = Class {
 

@@ -1,6 +1,6 @@
 local Class  = require "hump.class"
 
-local Prompt = require "prompt"
+local Prompt = require "sirocco.prompt"
 
 local Password = Class {
 
