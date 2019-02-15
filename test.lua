@@ -96,6 +96,11 @@ Password {
     prompt = "Enter your secret\n❱ ",
 }:loop()
 
+Password {
+    prompt = "Enter your secret (hidden answer)\n❱ ",
+    hidden = true
+}:loop()
+
 Prompt {
     prompt      = "What's your birthday?\n❱ ",
     placeholder = "YYYY-mm-dd",

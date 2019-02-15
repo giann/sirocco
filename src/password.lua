@@ -11,6 +11,8 @@ local Password = Class {
         options.default = nil
         options.possibleValues = nil
 
+        self.hidden = options.hidden
+
         Prompt.init(self, options)
 
         self.actual = ""
@@ -26,9 +28,17 @@ function Password:insertAtCurrentPosition(text)
         .. self.actual:sub(self.currentPosition.x + 1)
 
     self.buffer =
-        self.buffer:sub(1, self.currentPosition.x)
-        .. ("*"):rep(utf8.len(text))
-        .. self.buffer:sub(self.currentPosition.x + 1)
+        self.hidden
+            and ""
+            or self.buffer:sub(1, self.currentPosition.x)
+                .. ("*"):rep(utf8.len(text))
+                .. self.buffer:sub(self.currentPosition.x + 1)
+end
+
+function Password:processInput(input)
+    Prompt.processInput(self, input)
+
+    self.currentPosition.x = 0
 end
 
 function Password:complete()
