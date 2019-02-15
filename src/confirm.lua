@@ -35,11 +35,11 @@ function Confirm:registerKeybinding()
     List.registerKeybinding(self)
 
     -- up/down -> left/right
-    self.keybinding[Prompt.escapeCodes.left] = self.keybinding[Prompt.escapeCodes.up]
-    self.keybinding[Prompt.escapeCodes.up] = false
+    self.keybinding[Prompt.escapeCodes.cursor_left] = self.keybinding[Prompt.escapeCodes.cursor_up]
+    self.keybinding[Prompt.escapeCodes.cursor_up] = false
 
-    self.keybinding[Prompt.escapeCodes.right] = self.keybinding[Prompt.escapeCodes.down]
-    self.keybinding[Prompt.escapeCodes.down] = false
+    self.keybinding[Prompt.escapeCodes.cursor_right] = self.keybinding[Prompt.escapeCodes.cursor_down]
+    self.keybinding[Prompt.escapeCodes.cursor_down] = false
 end
 
 
@@ -75,12 +75,12 @@ function Confirm:after(result)
     self:setCursor(self.promptPosition.x, self.promptPosition.y)
 
     -- Clear down
-    self.output:write(Prompt.escapeCodes.cleardown)
+    self.output:write(Prompt.escapeCodes.clr_eos)
 
     self.output:write(" " .. (result[1] and "Yes" or "No"))
 
     -- Show cursor
-    self.output:write("\27[?25h")
+    self.output:write(Prompt.escapeCodes.cursor_visible)
 
     Prompt.after(self)
 end

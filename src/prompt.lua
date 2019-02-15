@@ -2,6 +2,7 @@ local Class  = require "hump.class"
 
 -- TODO: tui.getnext reads from stdin by default
 local tui    = require "tui"
+local tparm  = require "tui.tparm".tparm
 
 -- TODO: remove
 local term   = require "term"
@@ -9,17 +10,6 @@ local colors = term.colors
 
 local Prompt
 Prompt = Class {
-
-    -- If not in here, won't be recognized
-    -- TODO: get current terminfo instead
-    escapeCodes = {
-        cleardown = "\27[J",
-        getcursor = "\27[6n\n",
-        left      = "\27[D",
-        right     = "\27[C",
-        down      = "\27[B",
-        up        = "\27[A",
-    },
 
     init = function(self, options)
         self.input               = options.input or io.stdin
@@ -66,12 +56,12 @@ function Prompt:registerKeybinding()
     -- Only those escape codes are allowed
     -- [escapceCode.code] = function() ... end | true | false
     self.keybinding = {
-        [Prompt.escapeCodes.up]   = false,
-        [Prompt.escapeCodes.down] = false,
-        [Prompt.escapeCodes.left] = function()
+        [Prompt.escapeCodes.cursor_up]   = false,
+        [Prompt.escapeCodes.cursor_down] = false,
+        [Prompt.escapeCodes.cursor_left] = function()
             self:moveCursor(-1)
         end,
-        [Prompt.escapeCodes.right] = function()
+        [Prompt.escapeCodes.cursor_right] = function()
             self:moveCursor(1)
         end,
         ["\1"] = function() -- Home
@@ -144,11 +134,13 @@ function Prompt:handleBindings()
     local validEscapeCode = false
     local startOfValidEscapeCode = false
     for _, code  in pairs(Prompt.escapeCodes) do
-        if code == self.pendingBuffer then
-            validEscapeCode = true
-            break
-        elseif self.pendingBuffer == code:sub(1, #self.pendingBuffer) then
-            startOfValidEscapeCode = true
+        if type(code) == "string" then
+            if code == self.pendingBuffer then
+                validEscapeCode = true
+                break
+            elseif self.pendingBuffer == code:sub(1, #self.pendingBuffer) then
+                startOfValidEscapeCode = true
+            end
         end
     end
 
@@ -231,7 +223,7 @@ function Prompt:render()
     self:setCursor(self.startingPosition.x, self.startingPosition.y)
 
     -- Clear down
-    self.output:write(Prompt.escapeCodes.cleardown)
+    self.output:write(Prompt.escapeCodes.clr_eos)
 
     local inlinePossibleValues = self.showPossibleValues and #self.possibleValues > 0
         and " ("
@@ -329,7 +321,7 @@ function Prompt:getCursor()
 end
 
 function Prompt:setCursor(x, y)
-    self.output:write("\27[" .. math.floor(y) .. ";" .. math.floor(x) .. "H")
+    self.output:write(tparm(Prompt.escapeCodes.cursor_address, y, x))
 end
 
 function Prompt:before()
@@ -339,7 +331,7 @@ function Prompt:before()
     end
 
     -- Get current position
-    self.output:write(Prompt.escapeCodes.getcursor)
+    self.output:write(Prompt.escapeCodes.user7)
 
     self.startingPosition.x,
         self.startingPosition.y = self:getCursor()
@@ -369,5 +361,25 @@ function Prompt:ask()
 
     return result
 end
+
+-- If can't find terminfo, fallback to minimal list of necessary codes
+local ok, terminfo = pcall(require "tui.terminfo".find)
+
+Prompt.escapeCodes = ok and terminfo or {
+    cursor_invisible = "\27[?25l",
+    cursor_visible   = "\27[?25h",
+    clr_eos          = "\27[J",
+    cursor_address   = "\27[%i%p1%d;%p2%dH",
+    -- Get cursor position (https://invisible-island.net/ncurses/terminfo.ti.html)
+    user7            = "\27[6n",
+    cursor_left      = "\27[D",
+    cursor_right     = "\27[C",
+    cursor_down      = "\27[B",
+    cursor_up        = "\27[A",
+}
+
+-- For some reason those are empty in terminfo
+Prompt.escapeCodes.cursor_left = "\27[D"
+Prompt.escapeCodes.cursor_down = "\27[B"
 
 return Prompt

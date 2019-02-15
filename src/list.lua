@@ -33,11 +33,11 @@ local List = Class {
 
 function List:registerKeybinding()
     self.keybinding = {
-        [Prompt.escapeCodes.up] = function()
+        [Prompt.escapeCodes.cursor_up] = function()
             self:setCurrentChoice(-1)
         end,
 
-        [Prompt.escapeCodes.down] = function()
+        [Prompt.escapeCodes.cursor_down] = function()
             self:setCurrentChoice(1)
         end,
 
@@ -155,7 +155,7 @@ end
 
 function List:before()
     -- Hide cursor
-    self.output:write("\27[?25l")
+    self.output:write(Prompt.escapeCodes.cursor_invisible)
 
     Prompt.before(self)
 end
@@ -165,12 +165,12 @@ function List:after(result)
     self:setCursor(self.promptPosition.x, self.promptPosition.y)
 
     -- Clear down
-    self.output:write(Prompt.escapeCodes.cleardown)
+    self.output:write(Prompt.escapeCodes.clr_eos)
 
     self.output:write(" " .. (#result == 1 and tostring(result[1]) or table.concat(result, ", ")))
 
     -- Show cursor
-    self.output:write("\27[?25h")
+    self.output:write(Prompt.escapeCodes.cursor_visible)
 
     Prompt.after(self)
 end
