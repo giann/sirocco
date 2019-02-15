@@ -9,6 +9,12 @@ Prompt {
     required = true
 }:loop()
 
+Prompt {
+    prompt = "Another question\n❱ ",
+    default = "With a default answer",
+    required = true
+}:loop()
+
 List {
     prompt = "How do you say 'Hello'?",
     items = {
@@ -25,6 +31,30 @@ List {
             label = "Ciao"
         },
     },
+    required = true
+}:loop()
+
+List {
+    prompt = "Here's a list with some already selected options:",
+    items = {
+        {
+            value = "First",
+            label = "First"
+        },
+        {
+            value = "Second",
+            label = "Second"
+        },
+        {
+            value = "Third",
+            label = "Third"
+        },
+        {
+            value = "Fourth",
+            label = "Fourth"
+        },
+    },
+    default = { 2, 4 },
     required = true
 }:loop()
 

@@ -21,7 +21,10 @@ local List = Class {
         end
 
         self.currentChoice = 1
-        self.chosen = {}
+        self.chosen = options.default or {}
+
+        -- Don't let prompt use options.default
+        options.default = nil
 
         Prompt.init(self, options)
     end

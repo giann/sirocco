@@ -33,18 +33,18 @@ Prompt = Class {
         self.input       = options.input or io.stdin
         self.output      = options.output or io.stdout
         self.prompt      = options.prompt or "> "
-        self.placeholder = options.placeholder or nil
+        self.placeholder = options.placeholder
 
         self.required = false
         if options.required ~= nil then
             self.required = options.required
         end
 
-        self.buffer = ""
+        self.buffer = options.default or ""
         self.pendingBuffer = ""
 
         self.currentPosition = {
-            x = 0,
+            x = options.default and utf8.len(options.default) or 0,
             y = 0
         }
 
@@ -212,7 +212,8 @@ function Prompt:render()
 
     -- Print placeholder
     if self.placeholder
-        and (not self.promptPosition.x or not self.promptPosition.y) and utf8.len(self.buffer) == 0 then
+        and (not self.promptPosition.x or not self.promptPosition.y)
+        and utf8.len(self.buffer) == 0 then
         self.output:write(colors.bright .. colors.black .. (self.placeholder or "") .. colors.reset)
     end
 
