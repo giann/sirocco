@@ -243,7 +243,11 @@ function Prompt:render()
     if self.placeholder
         and (not self.promptPosition.x or not self.promptPosition.y)
         and utf8.len(self.buffer) == 0 then
-        self.output:write(colors.bright .. colors.black .. (self.placeholder or "") .. colors.reset)
+        self.output:write(
+            colors.bright .. colors.black
+            .. (self.placeholder or "")
+            .. colors.reset
+        )
     end
 
     -- Print current value

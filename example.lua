@@ -1,14 +1,49 @@
-package.path = package.path .. ";./?/init.lua"
+package.path = package.path .. ";./lib/tui/?/init.lua;./lib/tui/?.lua;"
 
-local sirocco  = require "sirocco"
-local Prompt   = sirocco.prompt
-local List     = sirocco.list
-local Password = sirocco.password
-local Confirm  = sirocco.confirm
-local colors   = require "term".colors
+local sirocco   = require "sirocco"
+local Prompt    = sirocco.prompt
+local List      = sirocco.list
+local Password  = sirocco.password
+local Confirm   = sirocco.confirm
+local Composite = sirocco.composite
+local colors    = require "term".colors
 
 -- Clear whole screen for demo
 -- io.write("\27[2J\27[1;1H")
+
+Composite {
+    prompt = "What's your birthday? ",
+    separator = " / ",
+    fields = {
+        {
+            placeholder = "YYYY",
+            filter = function(input)
+                return input:match("%d")
+                    and input
+                    or ""
+            end,
+            length = 4,
+        },
+        {
+            placeholder = "mm",
+            filter = function(input)
+                return input:match("%d")
+                    and input
+                    or ""
+            end,
+            length = 2,
+        },
+        {
+            placeholder = "dd",
+            filter = function(input)
+                return input:match("%d")
+                    and input
+                    or ""
+            end,
+            length = 2,
+        },
+    }
+}:ask()
 
 Prompt {
     prompt      = "A simple question\n❱ ",

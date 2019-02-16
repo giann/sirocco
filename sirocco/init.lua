@@ -1,6 +1,7 @@
 return {
-    prompt   = require "sirocco.prompt",
-    password = require "sirocco.password",
-    confirm  = require "sirocco.confirm",
-    list     = require "sirocco.list",
+    prompt    = require "sirocco.prompt",
+    password  = require "sirocco.password",
+    confirm   = require "sirocco.confirm",
+    composite = require "sirocco.composite",
+    list      = require "sirocco.list",
 }
