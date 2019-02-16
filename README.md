@@ -1,8 +1,12 @@
+<p align="center">
+    <img src="https://github.com/giann/sirocco/raw/master/assets/logo.png" alt="sirocco" width="304" height="304">
+</p>
+
 # Sirocco
 A collection of interactive command line prompts for Lua
 
 <p align="center">
-    <img src="https://github.com/giann/lua-query/raw/master/assets/example.gif" alt="lua-query">
+    <img src="https://github.com/giann/sirocco/raw/master/assets/example.gif" alt="sirocco">
 </p>
 
 ## Installing
@@ -22,7 +26,7 @@ See [`example.lua`](https://github.com/giann/sirocco/blob/master/example.lua) fo
 ### Text prompt
 
 <p align="center">
-    <img src="https://github.com/giann/lua-query/raw/master/assets/prompt.png" alt="lua-query">
+    <img src="https://github.com/giann/sirocco/raw/master/assets/prompt.png" alt="Prompt">
 </p>
 
 ```lua
@@ -55,7 +59,7 @@ Prompt {
 ### Password
 
 <p align="center">
-    <img src="https://github.com/giann/lua-query/raw/master/assets/password.png" alt="lua-query">
+    <img src="https://github.com/giann/sirocco/raw/master/assets/password.png" alt="Password">
 </p>
 
 ```lua
@@ -69,7 +73,7 @@ Password {
 ### Confirm
 
 <p align="center">
-    <img src="https://github.com/giann/lua-query/raw/master/assets/confirm.png" alt="lua-query">
+    <img src="https://github.com/giann/sirocco/raw/master/assets/confirm.png" alt="Confirm">
 </p>
 
 ```lua
@@ -81,11 +85,11 @@ Confirm {
 ### List
 
 <p align="center">
-    <img src="https://github.com/giann/lua-query/raw/master/assets/list-single.png" alt="lua-query">
+    <img src="https://github.com/giann/sirocco/raw/master/assets/list-single.png" alt="Single Choice List">
 </p>
 
 <p align="center">
-    <img src="https://github.com/giann/lua-query/raw/master/assets/list-multiple.png" alt="lua-query">
+    <img src="https://github.com/giann/sirocco/raw/master/assets/list-multiple.png" alt="Multiple Choices List">
 </p>
 
 ```lua
