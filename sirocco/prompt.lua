@@ -315,7 +315,7 @@ function Prompt:endCondition()
     -- Only validate if required or if something is in the buffer
     if self.finished and self.validator and (self.required or utf8.len(self.buffer) > 0) then
         local ok, message = self.validator(self.buffer)
-        self.finished = self.finished and ok
+        self.finished = self.finished and (ok or not self.required)
         self.message = message
     end
 
