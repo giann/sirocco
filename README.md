@@ -26,7 +26,7 @@ See [`example.lua`](https://github.com/giann/sirocco/blob/master/example.lua) fo
 ### Text prompt
 
 <p align="center">
-    <img src="https://github.com/giann/sirocco/raw/master/assets/prompt.png" alt="Prompt">
+    <img src="https://github.com/giann/sirocco/raw/master/assets/prompt.png" alt="Prompt" width="218">
 </p>
 
 Basic text prompt. Every prompt inherits from it so most of its options apply to them.
@@ -61,7 +61,7 @@ Prompt {
 ### Password
 
 <p align="center">
-    <img src="https://github.com/giann/sirocco/raw/master/assets/password.png" alt="Password">
+    <img src="https://github.com/giann/sirocco/raw/master/assets/password.png" alt="Password" width="222">
 </p>
 
 Obfuscates the input.
@@ -77,7 +77,7 @@ Password {
 ### Confirm
 
 <p align="center">
-    <img src="https://github.com/giann/sirocco/raw/master/assets/confirm.png" alt="Confirm">
+    <img src="https://github.com/giann/sirocco/raw/master/assets/confirm.png" alt="Confirm" width="266">
 </p>
 
 A simple yes/no prompt.
@@ -91,11 +91,11 @@ Confirm {
 ### List
 
 <p align="center">
-    <img src="https://github.com/giann/sirocco/raw/master/assets/list-single.png" alt="Single Choice List">
+    <img src="https://github.com/giann/sirocco/raw/master/assets/list-single.png" alt="Single Choice List" width="252">
 </p>
 
 <p align="center">
-    <img src="https://github.com/giann/sirocco/raw/master/assets/list-multiple.png" alt="Multiple Choices List">
+    <img src="https://github.com/giann/sirocco/raw/master/assets/list-multiple.png" alt="Multiple Choices List" width="284">
 </p>
 
 Will choose the appropriate list (check list or radio list).
@@ -130,7 +130,7 @@ List {
 ### Composite
 
 <p align="center">
-    <img src="https://github.com/giann/sirocco/raw/master/assets/composite.png" alt="Composite">
+    <img src="https://github.com/giann/sirocco/raw/master/assets/composite.png" alt="Composite" width="418">
 </p>
 
 Will jump from field to field when appropriate.
