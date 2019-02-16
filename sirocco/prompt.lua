@@ -71,7 +71,10 @@ function Prompt:registerKeybinding()
             self.currentPosition.x = utf8.len(self.buffer)
         end,
         ["\11"] = function() -- Clear line
-            self.buffer = ""
+            self.buffer = self.buffer:sub(
+                1,
+                self.currentPosition.x
+            )
         end,
         ["\9"] = function() -- Tab
             self:complete()
