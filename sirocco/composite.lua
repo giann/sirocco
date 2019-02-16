@@ -20,6 +20,68 @@ local Composite = Class {
 
 }
 
+function Composite:registerKeybinding()
+    Prompt.registerKeybinding(self)
+
+    self.keybinding["\5"] = function() -- End
+        local currentField = self:getCurrentField()
+        self.currentPosition.x = currentField.position + currentField.length
+    end
+
+    self.keybinding["\11"] = function() -- Clear line
+        local currentField = self:getCurrentField()
+        currentField.buffer = currentField.buffer:sub(
+            1,
+            self.currentPosition.x - currentField.position
+        )
+    end
+
+    self.keybinding["\127"] = function() -- Backspace
+        if self.currentPosition.x > 0 then
+            self:moveCursor(-1)
+
+            -- Maybe we jumped back to previous field
+            local currentField = self:getCurrentField()
+
+            -- Delete char at currentPosition
+            currentField.buffer = currentField.buffer:sub(1, self.currentPosition.x - currentField.position)
+                .. currentField.buffer:sub(self.currentPosition.x + 2 - currentField.position)
+        end
+    end
+end
+
+function Composite:complete()
+    -- TODO
+end
+
+function Composite:moveCursor(chars)
+    local currentField, i = self:getCurrentField()
+    local currentPosition = self.currentPosition.x - currentField.position
+
+    if chars > 0 then
+        -- Jump to text field
+        if currentPosition + chars > currentField.length
+            and i < #self.fields then
+            self.currentPosition.x = self.fields[i + 1].position
+        else
+            chars = math.min(utf8.len(currentField.buffer) - currentPosition, chars)
+
+            if chars > 0 then
+                self.currentPosition.x = self.currentPosition.x + chars
+            end
+        end
+    elseif chars < 0 then
+        -- Jump to previous field
+        if currentPosition + chars < 0
+            and i > 1 then
+            local previousField = self.fields[i - 1]
+            self.currentPosition.x = previousField.position + utf8.len(previousField.buffer)
+        else
+            self.currentPosition.x = math.max(currentField.position, self.currentPosition.x + chars)
+        end
+    end
+end
+
 function Composite:render()
     Prompt.render(self)
 
@@ -66,6 +128,21 @@ function Composite:render()
     )
 end
 
+function Composite:getCurrentField()
+    local currentField
+
+    local len = #self.fields
+    local i = 1
+    repeat
+        currentField = self.fields[i]
+        i = i + 1
+    until (self.currentPosition.x >= currentField.position
+        and self.currentPosition.x <= currentField.position + currentField.length)
+        or i > len
+
+    return currentField, i - 1
+end
+
 function Composite:processInput(input)
     -- Jump cursor to next field if necessary
     local len = #self.fields
@@ -78,25 +155,22 @@ function Composite:processInput(input)
     end
 
     -- Get current field
-    local currentField
-    local i = 1
-    repeat
-        currentField = self.fields[i]
-        i = i + 1
-    until (self.currentPosition.x >= currentField.position
-        and self.currentPosition.x <= currentField.position + currentField.length)
-        or i > len
+    local currentField = self:getCurrentField()
 
     -- Filter input
     input = currentField.filter
         and currentField.filter(input)
         or input
 
+    if utf8.len(currentField.buffer) >= currentField.length then
+        input = ""
+    end
+
     -- Insert in current field
     currentField.buffer =
-        currentField.buffer:sub(1, self.currentPosition.x - currentField.position)
+        (currentField.buffer:sub(1, self.currentPosition.x - currentField.position)
         .. input
-        .. currentField.buffer:sub(self.currentPosition.x + 1 - currentField.position)
+        .. currentField.buffer:sub(self.currentPosition.x + 1 - currentField.position))
 
     -- Increment current position
     self.currentPosition.x = self.currentPosition.x + utf8.len(input)
@@ -106,6 +180,16 @@ function Composite:processInput(input)
         local _, message = currentField.validator(currentField.buffer)
         self.message = message
     end
+end
+
+function Composite:processedResult()
+    local result = {}
+
+    for _, field in ipairs(self.fields) do
+        table.insert(result, field.buffer)
+    end
+
+    return result
 end
 
 return Composite
