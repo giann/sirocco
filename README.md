@@ -29,6 +29,8 @@ See [`example.lua`](https://github.com/giann/sirocco/blob/master/example.lua) fo
     <img src="https://github.com/giann/sirocco/raw/master/assets/prompt.png" alt="Prompt">
 </p>
 
+Basic text prompt. Every prompt inherits from it so most of its options apply to them.
+
 ```lua
 Prompt {
     -- The prompt
@@ -62,12 +64,14 @@ Prompt {
     <img src="https://github.com/giann/sirocco/raw/master/assets/password.png" alt="Password">
 </p>
 
+Obfuscates the input.
+
 ```lua
 Password {
     prompt = "Enter your secret (hidden answer)\n❱ ",
     -- When false *** are printed otherwise nothing
     hidden = false
-}:ask() -- Returns the answer
+}:ask() -- Returns the actual answer
 ```
 
 ### Confirm
@@ -75,6 +79,8 @@ Password {
 <p align="center">
     <img src="https://github.com/giann/sirocco/raw/master/assets/confirm.png" alt="Confirm">
 </p>
+
+A simple yes/no prompt.
 
 ```lua
 Confirm {
@@ -92,10 +98,12 @@ Confirm {
     <img src="https://github.com/giann/sirocco/raw/master/assets/list-multiple.png" alt="Multiple Choices List">
 </p>
 
+Will choose the appropriate list (check list or radio list).
+
 ```lua
 List {
     prompt   = "Where are you from?",
-    -- If true can select multiple choices (checklist) otherwise one (radio list)
+    -- If true can select multiple choices (check list) otherwise one (radio list)
     multiple = false,
     -- List of choices
     items    = {
@@ -116,5 +124,54 @@ List {
     },
     -- Indexes of already selected choices
     default  = { 2, 4 },
-}:ask() -- Returns the answer
+}:ask() -- Returns a table of the selected choices
+```
+
+### Composite
+
+<p align="center">
+    <img src="https://github.com/giann/sirocco/raw/master/assets/composite.png" alt="Composite">
+</p>
+
+Will jump from field to field when appropriate.
+
+**TODO:** field's length should be optional
+
+```lua
+Composite {
+    prompt = "What's your birthday? ",
+    -- Separator between each fields
+    separator = " / ",
+    -- Fields definition
+    fields = {
+        {
+            placeholder = "YYYY",
+            filter = function(input)
+                return input:match("%d")
+                    and input
+                    or ""
+            end,
+            -- Required
+            length = 4,
+        },
+        {
+            placeholder = "mm",
+            filter = function(input)
+                return input:match("%d")
+                    and input
+                    or ""
+            end,
+            length = 2,
+        },
+        {
+            placeholder = "dd",
+            filter = function(input)
+                return input:match("%d")
+                    and input
+                    or ""
+            end,
+            length = 2,
+        },
+    }
+}:ask() -- Returns a table of each field's answer
 ```
