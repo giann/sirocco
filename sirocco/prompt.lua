@@ -375,17 +375,18 @@ local ok, terminfo = pcall(require "tui.terminfo".find)
 Prompt.escapeCodes = ok and terminfo or {}
 
 -- Make sure we got everything we need
-Prompt.escapeCodes.cursor_invisible = Prompt.escapeCodes.cursor_invisible or "\27[?25l"
-Prompt.escapeCodes.cursor_visible   = Prompt.escapeCodes.cursor_visible   or "\27[?25h"
-Prompt.escapeCodes.clr_eos          = Prompt.escapeCodes.clr_eos          or "\27[J"
-Prompt.escapeCodes.cursor_address   = Prompt.escapeCodes.cursor_address   or "\27[%i%p1%d;%p2%dH"
+-- TODO: figure out why some of those are wrong in terminfo
+Prompt.escapeCodes.cursor_invisible = "\27[?25l"           -- Prompt.escapeCodes.cursor_invisible or "\27[?25l"
+Prompt.escapeCodes.cursor_visible   = "\27[?25h"           -- Prompt.escapeCodes.cursor_visible   or "\27[?25h"
+Prompt.escapeCodes.clr_eos          = "\27[J"              -- Prompt.escapeCodes.clr_eos          or "\27[J"
+Prompt.escapeCodes.cursor_address   = "\27[%i%p1%d;%p2%dH" -- Prompt.escapeCodes.cursor_address   or "\27[%i%p1%d;%p2%dH"
 -- Get cursor position (https://invisible-island.net/ncurses/terminfo.ti.html)
-Prompt.escapeCodes.user7            = Prompt.escapeCodes.user7            or "\27[6n"
-Prompt.escapeCodes.cursor_left      = Prompt.escapeCodes.cursor_left      or "\27[D"
-Prompt.escapeCodes.cursor_right     = Prompt.escapeCodes.cursor_right     or "\27[C"
-Prompt.escapeCodes.cursor_down      = Prompt.escapeCodes.cursor_down      or "\27[B"
-Prompt.escapeCodes.cursor_up        = Prompt.escapeCodes.cursor_up        or "\27[A"
-Prompt.escapeCodes.cursor_left      = Prompt.escapeCodes.cursor_left      or "\27[D"
-Prompt.escapeCodes.cursor_down      = Prompt.escapeCodes.cursor_down      or "\27[B"
+Prompt.escapeCodes.user7            = "\27[6n" -- Prompt.escapeCodes.user7        or "\27[6n"
+Prompt.escapeCodes.cursor_left      = "\27[D"  -- Prompt.escapeCodes.cursor_left  or "\27[D"
+Prompt.escapeCodes.cursor_right     = "\27[C"  -- Prompt.escapeCodes.cursor_right or "\27[C"
+Prompt.escapeCodes.cursor_down      = "\27[B"  -- Prompt.escapeCodes.cursor_down  or "\27[B"
+Prompt.escapeCodes.cursor_up        = "\27[A"  -- Prompt.escapeCodes.cursor_up    or "\27[A"
+Prompt.escapeCodes.cursor_left      = "\27[D"  -- Prompt.escapeCodes.cursor_left  or "\27[D"
+Prompt.escapeCodes.cursor_down      = "\27[B"  -- Prompt.escapeCodes.cursor_down  or "\27[B"
 
 return Prompt
