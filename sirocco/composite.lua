@@ -14,7 +14,7 @@ local Composite = Class {
         Prompt.init(self, options)
 
         for _, field in ipairs(self.fields) do
-            field.buffer = ""
+            field.buffer = field.default or ""
         end
     end
 
