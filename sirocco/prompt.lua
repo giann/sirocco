@@ -87,7 +87,23 @@ function Prompt:registerKeybinding()
                 self.buffer = self.buffer:sub(1, self.currentPosition.x)
                     .. self.buffer:sub(self.currentPosition.x + 2)
             end
-        end
+        end,
+        -- Clear screen
+        ["\12"] = function()
+            self:setCursor(1,1)
+
+            self.startingPosition = {
+                x = 1,
+                y = 1
+            }
+
+            self.promptPosition = {
+                x = false,
+                y = false
+            }
+
+            self.output:write(Prompt.escapeCodes.clr_eos)
+        end,
     }
 end
 
