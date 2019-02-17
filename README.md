@@ -9,6 +9,8 @@ A collection of interactive command line prompts for Lua
     <img src="https://github.com/giann/sirocco/raw/master/assets/example.gif" alt="sirocco">
 </p>
 
+**Note:** Sirocco is in active development.
+
 ## Installing
 
 Requirements:
