@@ -53,33 +53,39 @@ Prompt = Class {
 }
 
 function Prompt:registerKeybinding()
+    local function home()
+        self:moveCursor(-self.currentPosition.x)
+    end
+
+    local function end_()
+        self.currentPosition.x = utf8.len(self.buffer)
+    end
+
     -- Only those escape codes are allowed
     -- [escapceCode.code] = function() ... end | true | false
     self.keybinding = {
-        [Prompt.escapeCodes.cursor_up]   = false,
-        [Prompt.escapeCodes.cursor_down] = false,
-        [Prompt.escapeCodes.cursor_left] = function()
+        [Prompt.escapeCodes.key_up]   = false,
+        [Prompt.escapeCodes.key_down] = false,
+        [Prompt.escapeCodes.key_left] = function()
             self:moveCursor(-1)
         end,
-        [Prompt.escapeCodes.cursor_right] = function()
+        [Prompt.escapeCodes.key_right] = function()
             self:moveCursor(1)
         end,
-        ["\1"] = function() -- Home
-            self:moveCursor(-self.currentPosition.x)
-        end,
-        ["\5"] = function() -- End
-            self.currentPosition.x = utf8.len(self.buffer)
-        end,
+        ["\1"] = home,
+        [Prompt.escapeCodes.key_home] = home,
+        ["\5"] = end_,
+        [Prompt.escapeCodes.key_end] = end_,
         ["\11"] = function() -- Clear line
             self.buffer = self.buffer:sub(
                 1,
                 self.currentPosition.x
             )
         end,
-        ["\9"] = function() -- Tab
+        [Prompt.escapeCodes.tab] = function() -- Tab
             self:complete()
         end,
-        ["\127"] = function() -- Backspace
+        [Prompt.escapeCodes.key_backspace] = function() -- Backspace
             if self.currentPosition.x > 0 then
                 self:moveCursor(-1)
 
@@ -142,7 +148,8 @@ function Prompt:handleBindings()
 
     -- New line ends the query
     if self.pendingBuffer == "\n"
-        or self.pendingBuffer == "\r" then
+        or self.pendingBuffer == "\r"
+        or self.pendingBuffer == Prompt.escapeCodes.key_enter then
         self.finished = true
         self.pendingBuffer = ""
         return "consumed"
@@ -392,17 +399,20 @@ Prompt.escapeCodes = ok and terminfo or {}
 
 -- Make sure we got everything we need
 -- TODO: figure out why some of those are wrong in terminfo
-Prompt.escapeCodes.cursor_invisible = "\27[?25l"           -- Prompt.escapeCodes.cursor_invisible or "\27[?25l"
-Prompt.escapeCodes.cursor_visible   = "\27[?25h"           -- Prompt.escapeCodes.cursor_visible   or "\27[?25h"
-Prompt.escapeCodes.clr_eos          = "\27[J"              -- Prompt.escapeCodes.clr_eos          or "\27[J"
-Prompt.escapeCodes.cursor_address   = "\27[%i%p1%d;%p2%dH" -- Prompt.escapeCodes.cursor_address   or "\27[%i%p1%d;%p2%dH"
+Prompt.escapeCodes.cursor_invisible = Prompt.escapeCodes.cursor_invisible or "\27[?25l"
+Prompt.escapeCodes.cursor_visible   = Prompt.escapeCodes.cursor_visible   or "\27[?25h"
+Prompt.escapeCodes.clr_eos          = Prompt.escapeCodes.clr_eos          or "\27[J"
+Prompt.escapeCodes.cursor_address   = Prompt.escapeCodes.cursor_address   or "\27[%i%p1%d;%p2%dH"
 -- Get cursor position (https://invisible-island.net/ncurses/terminfo.ti.html)
-Prompt.escapeCodes.user7            = "\27[6n" -- Prompt.escapeCodes.user7        or "\27[6n"
-Prompt.escapeCodes.cursor_left      = "\27[D"  -- Prompt.escapeCodes.cursor_left  or "\27[D"
-Prompt.escapeCodes.cursor_right     = "\27[C"  -- Prompt.escapeCodes.cursor_right or "\27[C"
-Prompt.escapeCodes.cursor_down      = "\27[B"  -- Prompt.escapeCodes.cursor_down  or "\27[B"
-Prompt.escapeCodes.cursor_up        = "\27[A"  -- Prompt.escapeCodes.cursor_up    or "\27[A"
-Prompt.escapeCodes.cursor_left      = "\27[D"  -- Prompt.escapeCodes.cursor_left  or "\27[D"
-Prompt.escapeCodes.cursor_down      = "\27[B"  -- Prompt.escapeCodes.cursor_down  or "\27[B"
+Prompt.escapeCodes.user7            = Prompt.escapeCodes.user7            or "\27[6n"
+Prompt.escapeCodes.key_left         = Prompt.escapeCodes.key_left         or "\27[D"
+Prompt.escapeCodes.key_right        = Prompt.escapeCodes.key_right        or "\27[C"
+Prompt.escapeCodes.key_down         = Prompt.escapeCodes.key_down         or "\27[B"
+Prompt.escapeCodes.key_up           = Prompt.escapeCodes.key_up           or "\27[A"
+Prompt.escapeCodes.key_backspace    = Prompt.escapeCodes.key_backspace    or "\127"
+Prompt.escapeCodes.tab              = Prompt.escapeCodes.tab              or "\9"
+Prompt.escapeCodes.key_home         = Prompt.escapeCodes.key_home         or "\27" .. "0H"
+Prompt.escapeCodes.key_end          = Prompt.escapeCodes.key_end          or "\27" .. "0F"
+Prompt.escapeCodes.key_enter        = Prompt.escapeCodes.key_enter        or "\27" .. "0M"
 
 return Prompt

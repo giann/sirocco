@@ -35,11 +35,11 @@ function Confirm:registerKeybinding()
     List.registerKeybinding(self)
 
     -- up/down -> left/right
-    self.keybinding[Prompt.escapeCodes.cursor_left] = self.keybinding[Prompt.escapeCodes.cursor_up]
-    self.keybinding[Prompt.escapeCodes.cursor_up] = false
+    self.keybinding[Prompt.escapeCodes.key_left] = self.keybinding[Prompt.escapeCodes.key_up]
+    self.keybinding[Prompt.escapeCodes.key_up] = false
 
-    self.keybinding[Prompt.escapeCodes.cursor_right] = self.keybinding[Prompt.escapeCodes.cursor_down]
-    self.keybinding[Prompt.escapeCodes.cursor_down] = false
+    self.keybinding[Prompt.escapeCodes.key_right] = self.keybinding[Prompt.escapeCodes.key_down]
+    self.keybinding[Prompt.escapeCodes.key_down] = false
 end
 
 

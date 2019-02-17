@@ -23,10 +23,13 @@ local Composite = Class {
 function Composite:registerKeybinding()
     Prompt.registerKeybinding(self)
 
-    self.keybinding["\5"] = function() -- End
+    local function end_()
         local currentField = self:getCurrentField()
         self.currentPosition.x = currentField.position + currentField.length
     end
+
+    self.keybinding[Prompt.escapeCodes.key_end] = end_
+    self.keybinding["\5"] = end_
 
     self.keybinding["\11"] = function() -- Clear line
         local currentField = self:getCurrentField()
@@ -36,7 +39,7 @@ function Composite:registerKeybinding()
         )
     end
 
-    self.keybinding["\127"] = function() -- Backspace
+    self.keybinding[Prompt.escapeCodes.key_backspace] = function()
         if self.currentPosition.x > 0 then
             self:moveCursor(-1)
 

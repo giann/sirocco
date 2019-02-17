@@ -33,11 +33,11 @@ local List = Class {
 
 function List:registerKeybinding()
     self.keybinding = {
-        [Prompt.escapeCodes.cursor_up] = function()
+        [Prompt.escapeCodes.key_up] = function()
             self:setCurrentChoice(-1)
         end,
 
-        [Prompt.escapeCodes.cursor_down] = function()
+        [Prompt.escapeCodes.key_down] = function()
             self:setCurrentChoice(1)
         end,
 
