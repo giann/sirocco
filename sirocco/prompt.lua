@@ -16,6 +16,13 @@ Prompt = Class {
         self.output              = options.output or io.stdout
         self.prompt              = options.prompt or "> "
         self.placeholder         = options.placeholder
+
+        assert(
+            not self.placeholder
+                or not self.placeholder:find("\n"),
+            "New line not allowed in placeholder"
+        )
+
         self.possibleValues      = options.possibleValues or {}
         self.showPossibleValues  = options.showPossibleValues
         self.validator           = options.validator
@@ -44,6 +51,10 @@ Prompt = Class {
             y = false
         }
 
+        self.width = 80
+        -- Height is prompt rows + message row
+        self.height = self:getHeight()
+
         -- Will be printed below
         self.message = nil
 
@@ -51,6 +62,18 @@ Prompt = Class {
     end
 
 }
+
+function Prompt:getHeight()
+    -- Prompt is at least one row + message row
+    local height = 2
+
+    -- Prompt can have more than one row
+    for _ in self.prompt:gmatch("\n") do
+        height = height + 1
+    end
+
+    return height
+end
 
 function Prompt:registerKeybinding()
     -- Only those escape codes are allowed
@@ -315,6 +338,18 @@ function Prompt:renderMessage()
 end
 
 function Prompt:update()
+    self.terminalWidth, self.terminalHeight = self:getDimensions()
+
+    self.width = self.terminalWidth
+
+    local heightDelta = (self.startingPosition.y + self.height) - self.terminalHeight - 1
+    if heightDelta > 0 then
+        -- Scroll up
+        self.output:write(tparm(Prompt.escapeCodes.parm_index, heightDelta))
+
+        -- Shift everything up
+        self.startingPosition.y = self.startingPosition.y - heightDelta
+    end
 end
 
 function Prompt:processedResult()
@@ -336,6 +371,15 @@ function Prompt:endCondition()
     end
 
     return self.finished
+end
+
+function Prompt:getDimensions()
+    -- Get current position
+    self.output:write("\27[18t")
+    -- or stty size ?
+
+    local height, width  = tui.getnext():match("8;([0-9]*);([0-9]*)")
+    return tonumber(width), tonumber(height)
 end
 
 function Prompt:getCursor()
@@ -371,11 +415,11 @@ function Prompt:ask()
     self:before()
 
     repeat
+        self:update()
+
         self:render()
 
         self:handleInput()
-
-        self:update()
     until self:endCondition()
 
     local result = self:processedResult()
@@ -404,5 +448,6 @@ Prompt.escapeCodes.cursor_down      = "\27[B"  -- Prompt.escapeCodes.cursor_down
 Prompt.escapeCodes.cursor_up        = "\27[A"  -- Prompt.escapeCodes.cursor_up    or "\27[A"
 Prompt.escapeCodes.cursor_left      = "\27[D"  -- Prompt.escapeCodes.cursor_left  or "\27[D"
 Prompt.escapeCodes.cursor_down      = "\27[B"  -- Prompt.escapeCodes.cursor_down  or "\27[B"
+Prompt.escapeCodes.parm_index       = "\27[%p1%dS"
 
 return Prompt

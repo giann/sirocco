@@ -31,6 +31,21 @@ local List = Class {
 
 }
 
+function List:getHeight()
+    -- Prompt is at least one row + message row
+    local height = 2
+
+    -- Prompt can have more than one row
+    for _ in self.prompt:gmatch("\n") do
+        height = height + 1
+    end
+
+    -- Choices
+    height = height + #self.items
+
+    return height
+end
+
 function List:registerKeybinding()
     self.keybinding = {
         [Prompt.escapeCodes.cursor_up] = function()
@@ -167,7 +182,9 @@ function List:after(result)
     -- Clear down
     self.output:write(Prompt.escapeCodes.clr_eos)
 
-    self.output:write(" " .. (#result == 1 and tostring(result[1]) or table.concat(result, ", ")))
+    if result then
+        self.output:write(" " .. (#result == 1 and tostring(result[1]) or table.concat(result, ", ")))
+    end
 
     -- Show cursor
     self.output:write(Prompt.escapeCodes.cursor_visible)

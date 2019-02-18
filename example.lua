@@ -9,7 +9,7 @@ local Composite = sirocco.composite
 local colors    = require "term".colors
 
 -- Clear whole screen for demo
-io.write("\27[2J\27[1;1H")
+-- io.write("\27[2J\27[1;1H")
 
 Composite {
     prompt = "What's your birthday? ",
