@@ -40,10 +40,10 @@ Prompt = Class {
         self.buffer = options.default or ""
         self.pendingBuffer = ""
         -- Current offset in buffer (has to be translated in (x,y) cursor position)
-        self.bufferOffset = 1
+        self.bufferOffset = options.default and utf8.len(options.default) + 1 or 1
 
         self.currentPosition = {
-            x = options.default and utf8.len(options.default) or 0,
+            x = 0,
             y = 0
         }
 
@@ -170,7 +170,7 @@ function Prompt:complete()
             self.message = table.concat(matches, " ")
         elseif count == 1 then
             self.buffer = matches[1]
-            self:setOffset(utf8.len(self.buffer))
+            self:setOffset(utf8.len(self.buffer) + 1)
 
             if self.validator then
                 local _, message = self.validator(self.buffer)
@@ -391,7 +391,9 @@ function Prompt:render()
             lastLine = self.prompt
         end
 
-        self.promptPosition.x, self.promptPosition.y = x + utf8.len(lastLine), y
+        self.promptPosition.x, self.promptPosition.y =
+            x + utf8.len(lastLine) + (self.showPossibleValues and utf8.len(inlinePossibleValues) or 0),
+            y
     end
 
     self:renderMessage()
