@@ -1,4 +1,5 @@
-local Class  = require "hump.class"
+local Class   = require "hump.class"
+local winsize = require "sirocco.winsize"
 
 -- TODO: tui.getnext reads from stdin by default
 local tui    = require "tui"
@@ -401,8 +402,7 @@ function Prompt:renderMessage()
 end
 
 function Prompt:update()
-    local newWidth, newHeight = self:getDimensions()
-    self.terminalWidth, self.terminalHeight = newWidth or self.terminalWidth, newHeight or self.terminalHeight
+    self.terminalWidth, self.terminalHeight = winsize()
 
     self.width = self.terminalWidth
 
@@ -438,16 +438,6 @@ function Prompt:endCondition()
     return self.finished
 end
 
-function Prompt:getDimensions()
-    -- Get current position
-    self.output:write("\27[18t")
-    -- or stty size ?
-
-    local height, width  = tui.getnext():match("8;([0-9]*);([0-9]*)")
-
-    return tonumber(width), tonumber(height)
-end
-
 function Prompt:getCursor()
     local y, x  = tui.getnext():match("([0-9]*);([0-9]*)")
     return tonumber(x), tonumber(y)
@@ -470,8 +460,7 @@ function Prompt:before()
         self.startingPosition.y = self:getCursor()
 
     -- Wrap prompt if needed
-    local newWidth, newHeight = self:getDimensions()
-    self.terminalWidth, self.terminalHeight = newWidth or self.terminalWidth, newHeight or self.terminalHeight
+    self.terminalWidth, self.terminalHeight = winsize()
     self.height = self:getHeight()
 
     -- TODO: just insert \n in self.prompt
