@@ -9,7 +9,13 @@ local Composite = sirocco.composite
 local colors    = require "term".colors
 
 -- Clear whole screen for demo
-io.write("\27[2J\27[1;1H")
+-- io.write("\27[2J\27[1;1H")
+
+Prompt {
+    prompt      = "A simple question\n❱ ",
+    placeholder = "A simple answer",
+    required    = true
+}:ask()
 
 Composite {
     prompt = "What's your birthday? ",
@@ -43,12 +49,6 @@ Composite {
             length = 2,
         },
     }
-}:ask()
-
-Prompt {
-    prompt      = "A simple question\n❱ ",
-    placeholder = "A simple answer",
-    required    = true
 }:ask()
 
 Prompt {

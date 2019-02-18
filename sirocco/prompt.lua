@@ -1,8 +1,8 @@
-local Class  = require "hump.class"
-
--- TODO: tui.getnext reads from stdin by default
-local tui    = require "tui"
-local tparm  = require "tui.tparm".tparm
+local Class   = require "hump.class"
+local tui     = require "tui"
+local tparm   = require "tui.tparm".tparm
+local cqueues = require "cqueues"
+local signal  = require "cqueues.signal"
 
 -- TODO: remove
 local term   = require "term"
@@ -11,9 +11,16 @@ local colors = term.colors
 local Prompt
 Prompt = Class {
 
+    signals = {
+        SIGWINCH = 28
+    },
+
     init = function(self, options)
-        self.input               = options.input or io.stdin
-        self.output              = options.output or io.stdout
+        self.input               = {
+            pollfd = 0,  -- stdin
+            events = "r"
+        }
+        self.output              = io.stdout
         self.prompt              = options.prompt or "> "
         self.placeholder         = options.placeholder
         self.possibleValues      = options.possibleValues or {}
@@ -314,9 +321,6 @@ function Prompt:renderMessage()
     end
 end
 
-function Prompt:update()
-end
-
 function Prompt:processedResult()
     -- Remove trailing newline char
     return self.buffer:sub(1, -2)
@@ -339,6 +343,9 @@ function Prompt:endCondition()
 end
 
 function Prompt:getCursor()
+    -- Get current position
+    self.output:write(Prompt.escapeCodes.user7)
+
     local y, x  = tui.getnext():match("([0-9]*);([0-9]*)")
     return tonumber(x), tonumber(y)
 end
@@ -347,14 +354,20 @@ function Prompt:setCursor(x, y)
     self.output:write(tparm(Prompt.escapeCodes.cursor_address, y, x))
 end
 
-function Prompt:before()
-    if self.input == io.stdin then
-        -- Raw mode to get chars by chars
-        os.execute("/usr/bin/env stty raw opost -echo 2> /dev/null")
-    end
-
+function Prompt:getDimensions()
     -- Get current position
-    self.output:write(Prompt.escapeCodes.user7)
+    self.output:write("\27[18t")
+
+    local height, width  = tui.getnext():match("8;([0-9]*);([0-9]*)")
+    return tonumber(width), tonumber(height)
+end
+
+function Prompt:before()
+    -- Raw mode to get chars by chars
+    os.execute("/usr/bin/env stty raw opost -echo 2> /dev/null")
+
+    self.terminalWidth,
+        self.terminalHeight = self:getDimensions()
 
     self.startingPosition.x,
         self.startingPosition.y = self:getCursor()
@@ -367,13 +380,30 @@ function Prompt:after()
     os.execute("/usr/bin/env stty sane")
 end
 
+function Prompt:resize()
+end
+
+function Prompt:update()
+    -- TODO: scroll up if needed
+end
+
 function Prompt:ask()
     self:before()
 
     repeat
         self:render()
 
-        self:handleInput()
+        if cqueues.poll(self.input, Prompt.signalListener) == Prompt.signalListener then
+            if Prompt.signalListener:wait() == Prompt.signals.SIGWINCH then
+                -- Update dimensions
+                self.terminalWidth, self.terminalHeight = self:getDimensions()
+
+                -- Terminal was resized
+                self:resize()
+            end
+        else
+            self:handleInput()
+        end
 
         self:update()
     until self:endCondition()
@@ -404,5 +434,8 @@ Prompt.escapeCodes.cursor_down      = "\27[B"  -- Prompt.escapeCodes.cursor_down
 Prompt.escapeCodes.cursor_up        = "\27[A"  -- Prompt.escapeCodes.cursor_up    or "\27[A"
 Prompt.escapeCodes.cursor_left      = "\27[D"  -- Prompt.escapeCodes.cursor_left  or "\27[D"
 Prompt.escapeCodes.cursor_down      = "\27[B"  -- Prompt.escapeCodes.cursor_down  or "\27[B"
+
+-- Initialize signal listener
+Prompt.signalListener = signal.listen(Prompt.signals.SIGWINCH)
 
 return Prompt

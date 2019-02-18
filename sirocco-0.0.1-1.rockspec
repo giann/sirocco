@@ -34,5 +34,6 @@ build = {
 dependencies = {
     "lua >= 5.3",
     "lua-term >= 0.7-1",
-    "hump >= 0.4-2"
+    "hump >= 0.4-2",
+    "cqueues >= 20171014.53-0",
 }
