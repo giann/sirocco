@@ -38,7 +38,7 @@ function Composite:registerKeybinding()
 
     self.keybinding["\127"] = function() -- Backspace
         if self.currentPosition.x > 0 then
-            self:moveCursor(-1)
+            self:moveOffsetBy(-1)
 
             -- Maybe we jumped back to previous field
             local currentField = self:getCurrentField()
@@ -54,7 +54,7 @@ function Composite:complete()
     -- TODO
 end
 
-function Composite:moveCursor(chars)
+function Composite:moveOffsetBy(chars)
     local currentField, i = self:getCurrentField()
     local currentPosition = self.currentPosition.x - currentField.position
 

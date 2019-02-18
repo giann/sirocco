@@ -33,8 +33,13 @@ Prompt = Class {
             self.required = options.required
         end
 
+        -- Printed buffer (can be wrapped, colored etc.)
+        self.displayBuffer = options.default or ""
+        -- Unaltered buffer
         self.buffer = options.default or ""
         self.pendingBuffer = ""
+        -- Current offset in buffer (has to be translated in (x,y) cursor position)
+        self.bufferOffset = 1
 
         self.currentPosition = {
             x = options.default and utf8.len(options.default) or 0,
@@ -53,7 +58,7 @@ Prompt = Class {
 
         self.width = 80
         -- Height is prompt rows + message row
-        self.height = self:getHeight()
+        self.height = 24
 
         -- Will be printed below
         self.message = nil
@@ -72,6 +77,9 @@ function Prompt:getHeight()
         height = height + 1
     end
 
+    -- Value entered can wrap
+    height = height + math.floor(utf8.len(self.buffer) / self.terminalWidth)
+
     return height
 end
 
@@ -82,38 +90,40 @@ function Prompt:registerKeybinding()
         [Prompt.escapeCodes.cursor_up]   = false,
         [Prompt.escapeCodes.cursor_down] = false,
         [Prompt.escapeCodes.cursor_left] = function()
-            self:moveCursor(-1)
+            self:moveOffsetBy(-1)
         end,
         [Prompt.escapeCodes.cursor_right] = function()
-            self:moveCursor(1)
+            self:moveOffsetBy(1)
         end,
         ["\1"] = function() -- Home
-            self:moveCursor(-self.currentPosition.x)
+            self:setOffset(1)
         end,
         ["\5"] = function() -- End
-            self.currentPosition.x = utf8.len(self.buffer)
+            self:setOffset(utf8.len(self.buffer))
         end,
         ["\11"] = function() -- Clear line
             self.buffer = self.buffer:sub(
                 1,
-                self.currentPosition.x
+                self.bufferOffset - 1
             )
         end,
         ["\9"] = function() -- Tab
             self:complete()
         end,
         ["\127"] = function() -- Backspace
-            if self.currentPosition.x > 0 then
-                self:moveCursor(-1)
+            if self.bufferOffset > 1 then
+                self:moveOffsetBy(-1)
 
                 -- Delete char at currentPosition
-                self.buffer = self.buffer:sub(1, self.currentPosition.x)
-                    .. self.buffer:sub(self.currentPosition.x + 2)
+                self.buffer = self.buffer:sub(1, self.bufferOffset)
+                    .. self.buffer:sub(self.bufferOffset + 2)
             end
         end,
         -- Clear screen
         ["\12"] = function()
             self:setCursor(1,1)
+
+            self.bufferOffset = 1
 
             self.startingPosition = {
                 x = 1,
@@ -145,7 +155,7 @@ function Prompt:complete()
             self.message = table.concat(matches, " ")
         elseif count == 1 then
             self.buffer = matches[1]
-            self.currentPosition.x = utf8.len(self.buffer)
+            self:setOffset(utf8.len(self.buffer))
 
             if self.validator then
                 local _, message = self.validator(self.buffer)
@@ -213,21 +223,56 @@ end
 function Prompt:insertAtCurrentPosition(text)
     -- Insert text at currentPosition
     self.buffer =
-        self.buffer:sub(1, self.currentPosition.x)
+        self.buffer:sub(1, self.bufferOffset)
         .. text
-        .. self.buffer:sub(self.currentPosition.x + 1)
+        .. self.buffer:sub(self.bufferOffset + 1)
 end
 
-function Prompt:moveCursor(chars)
+function Prompt:updateCurrentPosition()
+    local offset = self.promptPosition.x + self.bufferOffset
+
+    local rows = 0
+    while offset - 1 > self.terminalWidth do
+        offset = offset - self.terminalWidth
+        rows = rows + 1
+    end
+
+    self.currentPosition.x = offset - self.promptPosition.x - 1
+    self.currentPosition.y = rows
+end
+
+-- Take value buffer and format/wrap it
+function Prompt:renderDisplayBuffer()
+    local buffer = self.buffer
+    self.displayBuffer = ""
+
+    while #buffer > 0 do
+        self.displayBuffer = self.displayBuffer
+            .. buffer:sub(1, self.terminalWidth)
+
+        buffer = buffer:sub(self.terminalWidth + 1)
+    end
+end
+
+-- Set offset and move cursor accordingly
+function Prompt:setOffset(offset)
+    self.bufferOffset = offset
+    self:updateCurrentPosition()
+end
+
+-- Move offset by increment and move cursor accordingly
+function Prompt:moveOffsetBy(chars)
     if chars > 0 then
-        chars = math.min(utf8.len(self.buffer) - self.currentPosition.x, chars)
+        chars = math.min(utf8.len(self.buffer) - self.bufferOffset, chars)
 
         if chars > 0 then
-            self.currentPosition.x = self.currentPosition.x + chars
+            self.bufferOffset = self.bufferOffset + chars
         end
     elseif chars < 0 then
-        self.currentPosition.x = math.max(0, self.currentPosition.x + chars)
+        self.bufferOffset = math.max(0, self.bufferOffset + chars)
     end
+
+    self:updateCurrentPosition()
 end
 
 function Prompt:processInput(input)
@@ -237,12 +282,16 @@ function Prompt:processInput(input)
 
     self:insertAtCurrentPosition(input)
 
-    self.currentPosition.x = self.currentPosition.x + utf8.len(input)
+    self.bufferOffset = self.bufferOffset + utf8.len(input)
+
+    self:updateCurrentPosition()
 
     if self.validator then
         local _, message = self.validator(self.buffer)
         self.message = message
     end
+
+    self:renderDisplayBuffer()
 end
 
 function Prompt:handleInput()
@@ -284,7 +333,7 @@ function Prompt:render()
     -- Print placeholder
     if self.placeholder
         and (not self.promptPosition.x or not self.promptPosition.y)
-        and utf8.len(self.buffer) == 0 then
+        and utf8.len(self.displayBuffer) == 0 then
         self.output:write(
             colors.bright .. colors.black
             .. (self.placeholder or "")
@@ -293,7 +342,7 @@ function Prompt:render()
     end
 
     -- Print current value
-    self.output:write(self.buffer)
+    self.output:write(self.displayBuffer)
 
     -- First time we need to initialize current position
     if not self.promptPosition.x or not self.promptPosition.y then
@@ -338,7 +387,8 @@ function Prompt:renderMessage()
 end
 
 function Prompt:update()
-    self.terminalWidth, self.terminalHeight = self:getDimensions()
+    local newWidth, newHeight = self:getDimensions()
+    self.terminalWidth, self.terminalHeight = newWidth or self.terminalWidth, newHeight or self.terminalHeight
 
     self.width = self.terminalWidth
 
@@ -350,11 +400,12 @@ function Prompt:update()
         -- Shift everything up
         self.startingPosition.y = self.startingPosition.y - heightDelta
     end
+
+    self:renderDisplayBuffer()
 end
 
 function Prompt:processedResult()
-    -- Remove trailing newline char
-    return self.buffer:sub(1, -2)
+    return self.buffer
 end
 
 function Prompt:endCondition()
@@ -379,6 +430,7 @@ function Prompt:getDimensions()
     -- or stty size ?
 
     local height, width  = tui.getnext():match("8;([0-9]*);([0-9]*)")
+
     return tonumber(width), tonumber(height)
 end
 
@@ -402,6 +454,13 @@ function Prompt:before()
 
     self.startingPosition.x,
         self.startingPosition.y = self:getCursor()
+
+    -- Wrap prompt if needed
+    local newWidth, newHeight = self:getDimensions()
+    self.terminalWidth, self.terminalHeight = newWidth or self.terminalWidth, newHeight or self.terminalHeight
+    self.height = self:getHeight()
+
+    -- TODO: just insert \n in self.prompt
 end
 
 function Prompt:after()
