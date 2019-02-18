@@ -69,6 +69,7 @@ Prompt = Class {
 
 }
 
+-- TODO: wrong
 function Prompt:getHeight()
     -- Prompt is at least one row + message row
     local height = 2
@@ -128,8 +129,8 @@ function Prompt:registerKeybinding()
                 self:moveOffsetBy(-1)
 
                 -- Delete char at currentPosition
-                self.buffer = self.buffer:sub(1, self.bufferOffset)
-                    .. self.buffer:sub(self.bufferOffset + 2)
+                self.buffer = self.buffer:sub(1, self.bufferOffset-1)
+                    .. self.buffer:sub(self.bufferOffset + 1)
             end
         end,
 
