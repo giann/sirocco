@@ -1,10 +1,11 @@
-LUA_VER         ?= 5.1
+# make LUA_DIR=/path/to/lua
+
+LUA_VER         ?= 5.3
 LUA_DIR         ?= /usr
-LUA_LIBDIR      := $(LUA_DIR)/lib/lua/$(LUA_VER)/term
 LUA_INC         := $(LUA_DIR)/include/lua$(LUA_VER)
-LUA_SHARE       := $(LUA_DIR)/share/lua/$(LUA_VER)/term
+LUA_LIB         := $(LUA_DIR)/lib/lua/$(LUA_VER)
 CWARNS          := -Wall -pedantic
-CFLAGS          += $(CWARNS) -O3 -I$(LUA_INC) -fPIC
+CFLAGS          += $(CWARNS) -O3 -I$(LUA_INC) -fPIC -L$(LUA_LIB)
 LIB_OPTION      := -shared
 
 LIBRARY         := sirocco/winsize.so
@@ -14,7 +15,7 @@ OBJ             := $(patsubst %.c, %.o, $(SRC))
 all: $(LIBRARY)
 
 $(LIBRARY): $(OBJ)
-	$(CC) $(CFLAGS) $(LIB_OPTION) -o $(LIBRARY) $(OBJ) -lc
+	$(CC) $(CFLAGS) $(LIB_OPTION) -o $(LIBRARY) $(OBJ) -lc -llua$(LUA_VER)
 
 clean:
 	$(RM) $(LIBRARY) *.o
