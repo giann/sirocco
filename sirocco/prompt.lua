@@ -59,7 +59,7 @@ Prompt = Class {
 
         self.width = 80
         -- Height is prompt rows + message row
-        self.height = 24
+        self.height = 1
 
         -- Will be printed below
         self.message = nil
@@ -258,15 +258,18 @@ end
 
 -- Take value buffer and format/wrap it
 function Prompt:renderDisplayBuffer()
-    local buffer = self.buffer
-    self.displayBuffer = ""
+    -- local buffer = self.buffer
+    -- self.displayBuffer = ""
 
-    while #buffer > 0 do
-        self.displayBuffer = self.displayBuffer
-            .. buffer:sub(1, self.terminalWidth)
+    -- while #buffer > 0 do
+    --     self.displayBuffer = self.displayBuffer
+    --         .. buffer:sub(1, self.terminalWidth)
 
-        buffer = buffer:sub(self.terminalWidth + 1)
-    end
+    --     buffer = buffer:sub(self.terminalWidth + 1)
+    -- end
+
+    -- Terminal wraps printed text on its own
+    self.displayBuffer = self.buffer
 end
 
 -- Set offset and move cursor accordingly
@@ -361,10 +364,24 @@ function Prompt:render()
 
     -- First time we need to initialize current position
     if not self.promptPosition.x or not self.promptPosition.y then
+        local x, y = self.startingPosition.x, self.startingPosition.y - 1
+        local prompt = self.prompt .. inlinePossibleValues
+        local part
+        while #prompt > 0 do
+            part = prompt:sub(1, self.terminalWidth)
+            prompt = prompt:sub(self.terminalWidth + 1)
+
+            y = y + 1
+
+            for _ in part:gmatch("\n") do
+                y = y + 1
+            end
+        end
+
         local lastLine = ""
         local lines = 0
         -- Maybe the prompt is on several lines
-        for line in self.prompt:gmatch("[^\n]*\n(.*)") do
+        for line in part:gmatch("[^\n]*\n(.*)") do
             lastLine = line
             lines = lines + 1
         end
@@ -373,8 +390,7 @@ function Prompt:render()
             lastLine = self.prompt
         end
 
-        self.promptPosition.x = utf8.len(inlinePossibleValues) + utf8.len(lastLine) + self.startingPosition.x
-        self.promptPosition.y = self.startingPosition.y + lines
+        self.promptPosition.x, self.promptPosition.y = x + utf8.len(lastLine), y
     end
 
     self:renderMessage()
@@ -406,6 +422,7 @@ function Prompt:update()
 
     self.width = self.terminalWidth
 
+    -- Scroll up if at the terminal's bottom
     local heightDelta = (self.startingPosition.y + self.height) - self.terminalHeight - 1
     if heightDelta > 0 then
         -- Scroll up
@@ -462,8 +479,6 @@ function Prompt:before()
     -- Wrap prompt if needed
     self.terminalWidth, self.terminalHeight = winsize()
     self.height = self:getHeight()
-
-    -- TODO: just insert \n in self.prompt
 end
 
 function Prompt:after()

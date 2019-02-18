@@ -9,5 +9,10 @@ local Prompt    = sirocco.prompt
 Prompt {
     prompt      = "A simple question\n❱ ",
     placeholder = "A simple answer",
-    required    = true
+}:ask()
+
+
+Prompt {
+    prompt      = ("A long prompt that should wrap"):rep(10) .. "\n❱ ",
+    placeholder = "A simple answer",
 }:ask()
