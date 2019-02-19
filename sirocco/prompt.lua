@@ -69,29 +69,13 @@ Prompt = Class {
 
 }
 
--- TODO: wrong
-function Prompt:getHeight()
-    -- Prompt is at least one row + message row
-    local height = 2
-
-    -- Prompt can have more than one row
-    for _ in self.prompt:gmatch("\n") do
-        height = height + 1
-    end
-
-    -- Value entered can wrap
-    height = height + math.floor(utf8.len(self.buffer) / self.terminalWidth)
-
-    return height
-end
-
 function Prompt:registerKeybinding()
     local function home()
         self:setOffset(1)
     end
 
     local function end_()
-        self:setOffset(utf8.len(self.buffer))
+        self:setOffset(utf8.len(self.buffer) + 1)
     end
 
     -- Only those escape codes are allowed
@@ -113,6 +97,7 @@ function Prompt:registerKeybinding()
 
         ["\5"] = end_,
         [Prompt.escapeCodes.key_end] = end_,
+
         ["\11"] = function() -- Clear line
             self.buffer = self.buffer:sub(
                 1,
@@ -137,8 +122,6 @@ function Prompt:registerKeybinding()
         -- Clear screen
         ["\12"] = function()
             self:setCursor(1,1)
-
-            self.bufferOffset = 1
 
             self.startingPosition = {
                 x = 1,
@@ -242,6 +225,23 @@ function Prompt:insertAtCurrentPosition(text)
         self.buffer:sub(1, self.bufferOffset)
         .. text
         .. self.buffer:sub(self.bufferOffset + 1)
+end
+
+-- Necessary because we erase everything each time
+-- and reposition to startingPosition
+function Prompt:getHeight()
+    -- Prompt is at least one row + message row
+    local height = 2
+
+    -- Prompt can have more than one row
+    for _ in self.prompt:gmatch("\n") do
+        height = height + 1
+    end
+
+    -- Value entered can wrap
+    height = height + math.ceil(utf8.len(self.buffer) / self.terminalWidth)
+
+    return height
 end
 
 function Prompt:updateCurrentPosition()
@@ -515,7 +515,6 @@ local ok, terminfo = pcall(require "tui.terminfo".find)
 Prompt.escapeCodes = ok and terminfo or {}
 
 -- Make sure we got everything we need
--- TODO: figure out why some of those are wrong in terminfo
 Prompt.escapeCodes.cursor_invisible = Prompt.escapeCodes.cursor_invisible or "\27[?25l"
 Prompt.escapeCodes.cursor_visible   = Prompt.escapeCodes.cursor_visible   or "\27[?25h"
 Prompt.escapeCodes.clr_eos          = Prompt.escapeCodes.clr_eos          or "\27[J"
