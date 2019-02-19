@@ -2,7 +2,7 @@
 
 LUA_VER         ?= 5.3
 LUA_DIR         ?= /usr
-LUA_INC         := $(LUA_DIR)/include/lua$(LUA_VER)
+LUA_INC         := $(LUA_DIR)/include/
 LUA_LIB         := $(LUA_DIR)/lib/lua/$(LUA_VER)
 CWARNS          := -Wall -pedantic
 CFLAGS          += $(CWARNS) -O3 -I$(LUA_INC) -fPIC -L$(LUA_LIB)

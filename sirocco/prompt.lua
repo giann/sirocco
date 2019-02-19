@@ -222,9 +222,9 @@ end
 function Prompt:insertAtCurrentPosition(text)
     -- Insert text at currentPosition
     self.buffer =
-        self.buffer:sub(1, self.bufferOffset)
+        self.buffer:sub(1, self.bufferOffset - 1)
         .. text
-        .. self.buffer:sub(self.bufferOffset + 1)
+        .. self.buffer:sub(self.bufferOffset)
 end
 
 -- Necessary because we erase everything each time
