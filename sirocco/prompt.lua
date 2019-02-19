@@ -227,21 +227,35 @@ function Prompt:insertAtCurrentPosition(text)
         .. self.buffer:sub(self.bufferOffset)
 end
 
+function Prompt.textHeight(text, width)
+    local height = 1
+    for line in text:gmatch("([^\n]*)\n") do
+        height = height + 1
+
+        for _ = 130, utf8.len(line), width do
+            height = height + 1
+        end
+    end
+
+    return height
+end
+
 -- Necessary because we erase everything each time
 -- and reposition to startingPosition
 function Prompt:getHeight()
-    -- Prompt is at least one row + message row
-    local height = 2
+    -- TODO: should not copy render
+    local everything =
+        self.prompt
+        .. (self.showPossibleValues and #self.possibleValues > 0
+        and " ("
+            .. table.concat(self.possibleValues, ", ")
+            .. ") "
+        or "")
+        .. (self.buffer or "")
+        .. "\n"
+        .. (self.message or "message") -- At least something otherwise line is ignored by textHeight
 
-    -- Prompt can have more than one row
-    for _ in self.prompt:gmatch("\n") do
-        height = height + 1
-    end
-
-    -- Value entered can wrap
-    height = height + math.ceil(utf8.len(self.buffer) / self.terminalWidth)
-
-    return height
+    return Prompt.textHeight(everything, self.terminalWidth)
 end
 
 function Prompt:updateCurrentPosition()
@@ -368,6 +382,7 @@ function Prompt:render()
         local x, y = self.startingPosition.x, self.startingPosition.y - 1
         local prompt = self.prompt .. inlinePossibleValues
         local part
+        -- TODO: yet another way of doing this ?!
         while #prompt > 0 do
             part = prompt:sub(1, self.terminalWidth)
             prompt = prompt:sub(self.terminalWidth + 1)
@@ -423,7 +438,10 @@ end
 function Prompt:update()
     self.terminalWidth, self.terminalHeight = winsize()
 
+    self:renderDisplayBuffer()
+
     self.width = self.terminalWidth
+    self.height = self:getHeight()
 
     -- Scroll up if at the terminal's bottom
     local heightDelta = (self.startingPosition.y + self.height) - self.terminalHeight - 1
@@ -433,9 +451,10 @@ function Prompt:update()
 
         -- Shift everything up
         self.startingPosition.y = self.startingPosition.y - heightDelta
+        self.promptPosition.y   = self.promptPosition.y
+            and (self.promptPosition.y - heightDelta)
+            or self.promptPosition.y
     end
-
-    self:renderDisplayBuffer()
 end
 
 function Prompt:processedResult()

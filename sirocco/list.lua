@@ -32,18 +32,40 @@ local List = Class {
 }
 
 function List:getHeight()
-    -- Prompt is at least one row + message row
-    local height = 2
+    local everything = self.prompt
 
-    -- Prompt can have more than one row
-    for _ in self.prompt:gmatch("\n") do
-        height = height + 1
+    if not self.prompt:match("\n$") then
+        everything = everything .. "\n"
     end
 
-    -- Choices
-    height = height + #self.items
+    for i, item in ipairs(self.items) do
+        local chosen = self.chosen[i]
 
-    return height
+        -- TODO: should not copy render
+        everything = everything
+            .. " "
+            .. (i == self.currentChoice and "❱ " or "  ")
+
+            .. (self.multiple and "[" or "(")
+            .. (
+                self.multiple
+                and (chosen and "✔" or " ")
+                or (chosen and "●" or " ")
+            )
+            .. (self.multiple and "]" or ")")
+
+            .. " "
+
+            .. (chosen and colors.underscore or "")
+            .. item.label
+
+            .. "\n"
+    end
+
+    everything = everything
+        .. (self.message or "message") -- At least something otherwise line is ignored by textHeight
+
+    return Prompt.textHeight(everything, self.terminalWidth)
 end
 
 function List:registerKeybinding()
