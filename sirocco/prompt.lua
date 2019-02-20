@@ -73,7 +73,7 @@ function Prompt:registerKeybinding()
     self.keybinding = {
         command_beg_of_line = {
             Prompt.escapeCodes.key_home,
-            "\1", -- C-a
+            "\1", -- C-a, string.byte("A") & 15
         },
 
         command_end_of_line = {
@@ -114,6 +114,14 @@ function Prompt:registerKeybinding()
         command_validate = {
             "\n",
             "\r"
+        },
+
+        command_unix_line_discard = {
+            "\21", -- C-u
+        },
+
+        command_unix_word_rubout = {
+            "\23", -- C-w
         }
     }
 end
@@ -546,9 +554,6 @@ function Prompt:command_clear_screen() -- Control-l
     self.output:write(Prompt.escapeCodes.clr_eos)
 end
 
-function Prompt:command_newline() -- Control-m j
-end
-
 function Prompt:command_get_next_history() -- Control-n
 end
 
@@ -568,9 +573,17 @@ function Prompt:command_transpose_chars() -- Control-t
 end
 
 function Prompt:command_unix_line_discard() -- Control-u
+    self:setOffset(1)
+    self.buffer = ""
 end
 
 function Prompt:command_unix_word_rubout() -- Control-w
+    local s, e = self.buffer:sub(1, self.bufferOffset - 1):find("[%g]+[^%g]*$")
+
+    if s then
+        self.buffer = self.buffer:sub(1, s - 1) .. self.buffer:sub(e + 1)
+        self:moveOffsetBy(s - e - 1)
+    end
 end
 
 function Prompt:command_yank() -- Control-y
