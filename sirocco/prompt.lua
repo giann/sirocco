@@ -108,7 +108,6 @@ function Prompt:registerKeybinding()
         -- TODO: those should be signals
         command_exit = {
             "\3", -- C-c
-            "\4", -- C-d
         },
 
         command_validate = {
@@ -126,6 +125,10 @@ function Prompt:registerKeybinding()
 
         command_transpose_chars = {
             "\20", -- C-t
+        },
+
+        command_delete = {
+            "\4", -- C-d
         },
     }
 end
@@ -494,6 +497,13 @@ function Prompt:command_command_func_t() -- Control-c o x z [ \ ^\
 end
 
 function Prompt:command_delete() -- Control-d
+    if utf8.len(self.buffer) > 0 then
+        self.buffer =
+            self.buffer:sub(1, math.max(1, self.bufferOffset - 1))
+            .. self.buffer:sub(self.bufferOffset + 1)
+    else
+        self:command_exit()
+    end
 end
 
 function Prompt:command_end_of_line() -- Control-e
