@@ -74,11 +74,13 @@ function List:registerKeybinding()
     self.keybinding.command_get_next_choice = {
         Prompt.escapeCodes.key_down,
         "\14", -- C-n
+        "\27[B" -- backup
     }
 
     self.keybinding.command_get_previous_choice = {
         Prompt.escapeCodes.key_up,
         "\16", -- C-p
+        "\27[A" -- backup
     }
 
     self.keybinding.command_select_choice = {

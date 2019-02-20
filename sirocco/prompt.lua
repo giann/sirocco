@@ -83,10 +83,12 @@ function Prompt:registerKeybinding()
 
         command_backward_char = {
             Prompt.escapeCodes.key_left,
+            "\27[D" -- backup
         },
 
         command_forward_char = {
             Prompt.escapeCodes.key_right,
+            "\27[C" -- backup
         },
 
         command_complete = {
@@ -102,7 +104,8 @@ function Prompt:registerKeybinding()
         },
 
         command_delete_back = {
-            Prompt.escapeCodes.key_backspace
+            Prompt.escapeCodes.key_backspace,
+            "\127"
         },
 
         -- TODO: those should be signals
