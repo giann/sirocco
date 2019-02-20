@@ -20,39 +20,6 @@ local Composite = Class {
 
 }
 
-function Composite:registerKeybinding()
-    Prompt.registerKeybinding(self)
-
-    local function end_()
-        local currentField = self:getCurrentField()
-        self.currentPosition.x = currentField.position + currentField.length
-    end
-
-    self.keybinding[Prompt.escapeCodes.key_end] = end_
-    self.keybinding["\5"] = end_
-
-    self.keybinding["\11"] = function() -- Clear line
-        local currentField = self:getCurrentField()
-        currentField.buffer = currentField.buffer:sub(
-            1,
-            self.currentPosition.x - currentField.position
-        )
-    end
-
-    self.keybinding[Prompt.escapeCodes.key_backspace] = function()
-        if self.currentPosition.x > 0 then
-            self:moveOffsetBy(-1)
-
-            -- Maybe we jumped back to previous field
-            local currentField = self:getCurrentField()
-
-            -- Delete char at currentPosition
-            currentField.buffer = currentField.buffer:sub(1, self.currentPosition.x - currentField.position)
-                .. currentField.buffer:sub(self.currentPosition.x + 2 - currentField.position)
-        end
-    end
-end
-
 function Composite:complete()
     -- TODO
 end
@@ -193,6 +160,32 @@ function Composite:processedResult()
     end
 
     return result
+end
+
+function Composite:command_end_of_line()
+    local currentField = self:getCurrentField()
+    self.currentPosition.x = currentField.position + currentField.length
+end
+
+function Composite:command_kill_line()
+    local currentField = self:getCurrentField()
+    currentField.buffer = currentField.buffer:sub(
+        1,
+        self.currentPosition.x - currentField.position
+    )
+end
+
+function Composite:command_delete_back()
+    if self.currentPosition.x > 0 then
+        self:moveOffsetBy(-1)
+
+        -- Maybe we jumped back to previous field
+        local currentField = self:getCurrentField()
+
+        -- Delete char at currentPosition
+        currentField.buffer = currentField.buffer:sub(1, self.currentPosition.x - currentField.position)
+            .. currentField.buffer:sub(self.currentPosition.x + 2 - currentField.position)
+    end
 end
 
 return Composite

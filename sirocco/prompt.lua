@@ -70,117 +70,64 @@ Prompt = Class {
 }
 
 function Prompt:registerKeybinding()
-    local function home()
-        self:setOffset(1)
-    end
-
-    local function end_()
-        self:setOffset(utf8.len(self.buffer) + 1)
-    end
-
-    -- Only those escape codes are allowed
-    -- [escapceCode.code] = function() ... end | true | false
     self.keybinding = {
-        [Prompt.escapeCodes.key_up]   = false,
-        [Prompt.escapeCodes.key_down] = false,
+        command_beg_of_line = {
+            Prompt.escapeCodes.key_home,
+            "\1", -- C-a
+        },
 
-        [Prompt.escapeCodes.key_left] = function()
-            self:moveOffsetBy(-1)
-        end,
+        command_end_of_line = {
+            Prompt.escapeCodes.key_end,
+            "\5", -- C-e
+        },
 
-        [Prompt.escapeCodes.key_right] = function()
-            self:moveOffsetBy(1)
-        end,
+        command_backward_char = {
+            Prompt.escapeCodes.key_left,
+        },
 
-        ["\1"] = home,
-        [Prompt.escapeCodes.key_home] = home,
+        command_forward_char = {
+            Prompt.escapeCodes.key_right,
+        },
 
-        ["\5"] = end_,
-        [Prompt.escapeCodes.key_end] = end_,
+        command_complete = {
+            Prompt.escapeCodes.tab
+        },
 
-        ["\11"] = function() -- Clear line
-            self.buffer = self.buffer:sub(
-                1,
-                self.bufferOffset - 1
-            )
-        end,
+        command_kill_line = {
+            "\11", -- C-k
+        },
 
-        [Prompt.escapeCodes.tab] = function() -- Tab
-            self:complete()
-        end,
+        command_clear_screen = {
+            "\12", -- C-l
+        },
 
-        [Prompt.escapeCodes.key_backspace] = function()
-            if self.currentPosition.x > 0 then
-                self:moveOffsetBy(-1)
+        command_delete_back = {
+            Prompt.escapeCodes.key_backspace
+        },
 
-                -- Delete char at currentPosition
-                self.buffer = self.buffer:sub(1, self.bufferOffset-1)
-                    .. self.buffer:sub(self.bufferOffset + 1)
-            end
-        end,
+        -- TODO: those should be signals
+        command_exit = {
+            "\3", -- C-c
+            "\4", -- C-d
+        },
 
-        -- Clear screen
-        ["\12"] = function()
-            self:setCursor(1,1)
-
-            self.startingPosition = {
-                x = 1,
-                y = 1
-            }
-
-            self.promptPosition = {
-                x = false,
-                y = false
-            }
-
-            self.output:write(Prompt.escapeCodes.clr_eos)
-        end,
+        command_validate = {
+            "\n",
+            "\r"
+        }
     }
 end
 
-function Prompt:complete()
-    if #self.possibleValues > 0 then
-        local matches = {}
-        local count = 0
-        for _, value in ipairs(self.possibleValues) do
-            if value:sub(1, #self.buffer) == self.buffer then
-                table.insert(matches, value)
-                count = count + 1
-            end
-        end
-
-        if count > 1 then
-            self.message = table.concat(matches, " ")
-        elseif count == 1 then
-            self.buffer = matches[1]
-            self:setOffset(utf8.len(self.buffer) + 1)
-
-            if self.validator then
-                local _, message = self.validator(self.buffer)
-                self.message = message
-            end
-        end
-    end
-end
-
 function Prompt:handleBindings()
-    -- Ctrl-c and Ctrl-d interrupt everything
-    if self.pendingBuffer == "\3"
-        or self.pendingBuffer == "\4" then
-        self:after()
-        os.exit()
-    end
+    local binding
 
-    -- New line ends the query
-    if self.pendingBuffer == "\n"
-        or self.pendingBuffer == "\r"
-        or self.pendingBuffer == Prompt.escapeCodes.key_enter then
-        self.finished = true
-        self.pendingBuffer = ""
-        return "consumed"
+    for command, keys in pairs(self.keybinding) do
+        for _, key in ipairs(keys) do
+            if key == self.pendingBuffer then
+                binding = command
+            end
+        end
     end
-
-    local binding = self.keybinding[self.pendingBuffer]
 
     local validEscapeCode = false
     local startOfValidEscapeCode = false
@@ -200,19 +147,10 @@ function Prompt:handleBindings()
     end
 
     if binding then
-        -- We have a binding for it
-        if type(binding) == "function" then
-            binding()
-        -- We don't have a binding for it but we don't want it in the buffer
-        else
-            self.output:write(self.pendingBuffer)
-        end
-    -- We don't handle it at all, it'll be printed and in the buffer
-    elseif binding == nil then
+        self[binding](self)
+    else
         return false
     end
-
-    -- If binding == false, we blacklisted it: do nothing
 
     -- If we reach here, escape code was consumed
     self.pendingBuffer = ""
@@ -526,6 +464,142 @@ function Prompt:ask()
     self:after(result)
 
     return result
+end
+
+-- Commands
+function Prompt:command_set_mark() -- Control-@
+end
+
+function Prompt:command_beg_of_line() -- Control-a
+    self:setOffset(1)
+end
+
+function Prompt:command_backward_char() -- Control-b, left arrow
+    self:moveOffsetBy(-1)
+end
+
+function Prompt:command_command_func_t() -- Control-c o x z [ \ ^\
+end
+
+function Prompt:command_delete() -- Control-d
+end
+
+function Prompt:command_end_of_line() -- Control-e
+    self:setOffset(utf8.len(self.buffer) + 1)
+end
+
+function Prompt:command_forward_char() -- Control-f, right arrow
+    self:moveOffsetBy(1)
+end
+
+function Prompt:command_abort() -- Control-g
+end
+
+function Prompt:command_rubout() -- Control-h
+end
+
+function Prompt:command_complete() -- Control-i, tab
+    if #self.possibleValues > 0 then
+        local matches = {}
+        local count = 0
+        for _, value in ipairs(self.possibleValues) do
+            if value:sub(1, #self.buffer) == self.buffer then
+                table.insert(matches, value)
+                count = count + 1
+            end
+        end
+
+        if count > 1 then
+            self.message = table.concat(matches, " ")
+        elseif count == 1 then
+            self.buffer = matches[1]
+            self:setOffset(utf8.len(self.buffer) + 1)
+
+            if self.validator then
+                local _, message = self.validator(self.buffer)
+                self.message = message
+            end
+        end
+    end
+end
+
+function Prompt:command_kill_line() -- Control-k
+    self.buffer = self.buffer:sub(
+        1,
+        self.bufferOffset - 1
+    )
+end
+
+function Prompt:command_clear_screen() -- Control-l
+    self:setCursor(1,1)
+
+    self.startingPosition = {
+        x = 1,
+        y = 1
+    }
+
+    self.promptPosition = {
+        x = false,
+        y = false
+    }
+
+    self.output:write(Prompt.escapeCodes.clr_eos)
+end
+
+function Prompt:command_newline() -- Control-m j
+end
+
+function Prompt:command_get_next_history() -- Control-n
+end
+
+function Prompt:command_get_previous_history() -- Control-p
+end
+
+function Prompt:command_quoted_insert() -- Control-q v
+end
+
+function Prompt:command_reverse_search_history() -- Control-r
+end
+
+function Prompt:command_forward_search_history() -- Control-s
+end
+
+function Prompt:command_transpose_chars() -- Control-t
+end
+
+function Prompt:command_unix_line_discard() -- Control-u
+end
+
+function Prompt:command_unix_word_rubout() -- Control-w
+end
+
+function Prompt:command_yank() -- Control-y
+end
+
+function Prompt:command_char_search() -- Control-]
+end
+
+function Prompt:command_undo_command() -- Control-_
+end
+
+function Prompt:command_delete_back()
+    if self.currentPosition.x > 0 then
+        self:moveOffsetBy(-1)
+
+        -- Delete char at currentPosition
+        self.buffer = self.buffer:sub(1, self.bufferOffset-1)
+            .. self.buffer:sub(self.bufferOffset + 1)
+    end
+end
+
+function Prompt:command_validate()
+    self.finished = true
+    self.pendingBuffer = ""
+end
+
+function Prompt:command_exit()
+    self:after()
+    os.exit()
 end
 
 -- If can't find terminfo, fallback to minimal list of necessary codes

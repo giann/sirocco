@@ -31,18 +31,6 @@ local Confirm = Class {
 
 }
 
-function Confirm:registerKeybinding()
-    List.registerKeybinding(self)
-
-    -- up/down -> left/right
-    self.keybinding[Prompt.escapeCodes.key_left] = self.keybinding[Prompt.escapeCodes.key_up]
-    self.keybinding[Prompt.escapeCodes.key_up] = false
-
-    self.keybinding[Prompt.escapeCodes.key_right] = self.keybinding[Prompt.escapeCodes.key_down]
-    self.keybinding[Prompt.escapeCodes.key_down] = false
-end
-
-
 function Confirm:render()
     Prompt.render(self)
 

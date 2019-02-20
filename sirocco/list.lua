@@ -69,33 +69,20 @@ function List:getHeight()
 end
 
 function List:registerKeybinding()
-    self.keybinding = {
-        [Prompt.escapeCodes.key_up] = function()
-            self:setCurrentChoice(-1)
-        end,
+    Prompt.registerKeybinding(self)
 
-        [Prompt.escapeCodes.key_down] = function()
-            self:setCurrentChoice(1)
-        end,
+    self.keybinding.command_get_next_choice = {
+        Prompt.escapeCodes.key_down,
+        "\14", -- C-n
+    }
 
-        -- Select an item
-        [" "] = function()
-            local count = 0
-            for _, v in pairs(self.chosen) do
-                count = count + (v and 1 or 0)
-            end
+    self.keybinding.command_get_previous_choice = {
+        Prompt.escapeCodes.key_up,
+        "\16", -- C-p
+    }
 
-            self.chosen[self.currentChoice] = not self.chosen[self.currentChoice]
-
-            -- Only one choice allowed ? unselect previous choice
-            if self.chosen[self.currentChoice] and not self.multiple and count > 0 then
-                self.chosen = {
-                    [self.currentChoice] = true
-                }
-
-                self.message = nil
-            end
-        end,
+    self.keybinding.command_select_choice = {
+        " "
     }
 end
 
@@ -212,6 +199,32 @@ function List:after(result)
     self.output:write(Prompt.escapeCodes.cursor_visible)
 
     Prompt.after(self)
+end
+
+function List:command_get_next_choice()
+    self:setCurrentChoice(1)
+end
+
+function List:command_get_previous_choice()
+    self:setCurrentChoice(-1)
+end
+
+function List:command_select_choice()
+    local count = 0
+    for _, v in pairs(self.chosen) do
+        count = count + (v and 1 or 0)
+    end
+
+    self.chosen[self.currentChoice] = not self.chosen[self.currentChoice]
+
+    -- Only one choice allowed ? unselect previous choice
+    if self.chosen[self.currentChoice] and not self.multiple and count > 0 then
+        self.chosen = {
+            [self.currentChoice] = true
+        }
+
+        self.message = nil
+    end
 end
 
 return List
