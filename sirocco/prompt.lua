@@ -1,5 +1,7 @@
 local Class   = require "hump.class"
 local winsize = require "sirocco.winsize"
+local char    = require "sirocco.char"
+local C, M    = char.C, char.M
 
 -- TODO: tui.getnext reads from stdin by default
 local tui    = require "tui"
@@ -73,23 +75,23 @@ function Prompt:registerKeybinding()
     self.keybinding = {
         command_beg_of_line = {
             Prompt.escapeCodes.key_home,
-            "\1", -- C-a, string.byte("A") & 15
+            C "a",
         },
 
         command_end_of_line = {
             Prompt.escapeCodes.key_end,
-            "\5", -- C-e
+            C "e",
         },
 
         command_backward_char = {
             Prompt.escapeCodes.key_left,
-            "\2", -- C-b
+            C "b",
             "\27[D" -- backup
         },
 
         command_forward_char = {
             Prompt.escapeCodes.key_right,
-            "\6", -- C-f
+            C "f",
             "\27[C" -- backup
         },
 
@@ -98,11 +100,11 @@ function Prompt:registerKeybinding()
         },
 
         command_kill_line = {
-            "\11", -- C-k
+            C "k",
         },
 
         command_clear_screen = {
-            "\12", -- C-l
+            C "l",
         },
 
         command_delete_back = {
@@ -110,30 +112,30 @@ function Prompt:registerKeybinding()
             "\127"
         },
 
+        command_unix_line_discard = {
+            C "u",
+        },
+
+        command_unix_word_rubout = {
+            C "w",
+        },
+
+        command_transpose_chars = {
+            C "t",
+        },
+
+        command_delete = {
+            C "d",
+        },
+
         -- TODO: those should be signals
         command_exit = {
-            "\3", -- C-c
+            C "c",
         },
 
         command_validate = {
             "\n",
             "\r"
-        },
-
-        command_unix_line_discard = {
-            "\21", -- C-u
-        },
-
-        command_unix_word_rubout = {
-            "\23", -- C-w
-        },
-
-        command_transpose_chars = {
-            "\20", -- C-t
-        },
-
-        command_delete = {
-            "\4", -- C-d
         },
     }
 end

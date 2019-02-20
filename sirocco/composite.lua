@@ -20,10 +20,6 @@ local Composite = Class {
 
 }
 
-function Composite:complete()
-    -- TODO
-end
-
 function Composite:moveOffsetBy(chars)
     local currentField, i = self:getCurrentField()
     local currentPosition = self.currentPosition.x - currentField.position
@@ -162,6 +158,8 @@ function Composite:processedResult()
     return result
 end
 
+-- TODO: redefine all Prompt command_ to operate on current field instead of buffer
+
 function Composite:command_end_of_line()
     local currentField = self:getCurrentField()
     self.currentPosition.x = currentField.position + currentField.length
@@ -186,6 +184,11 @@ function Composite:command_delete_back()
         currentField.buffer = currentField.buffer:sub(1, self.currentPosition.x - currentField.position)
             .. currentField.buffer:sub(self.currentPosition.x + 2 - currentField.position)
     end
+end
+
+
+function Composite:command_complete()
+    -- TODO
 end
 
 return Composite

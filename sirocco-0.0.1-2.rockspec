@@ -21,6 +21,7 @@ build = {
         ["sirocco.list"]       = "sirocco/list.lua",
         ["sirocco.password"]   = "sirocco/password.lua",
         ["sirocco.prompt"]     = "sirocco/prompt.lua",
+        ["sirocco.char"]       = "sirocco/char.lua",
         ["sirocco.winsize"]    = "sirocco/winsize.c",
         ["tui"]                = "lib/tui/tui/init.lua",
         ["tui.filters"]        = "lib/tui/tui/filters.lua",

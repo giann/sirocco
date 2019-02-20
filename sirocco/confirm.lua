@@ -3,6 +3,8 @@ local colors = require "term".colors
 
 local Prompt = require "sirocco.prompt"
 local List   = require "sirocco.list"
+local char   = require "sirocco.char"
+local C, M   = char.C, char.M
 
 local Confirm = Class {
 
@@ -30,6 +32,32 @@ local Confirm = Class {
     end
 
 }
+
+function Confirm:registerKeybinding()
+    self.keybinding = {
+        command_get_next_choice = {
+            Prompt.escapeCodes.key_right,
+            C "n",
+            "\27[C" -- backup
+        },
+
+        command_get_previous_choice = {
+            Prompt.escapeCodes.key_left,
+            C "p",
+            "\27[D" -- backup
+        },
+
+        -- TODO: those should be signals
+        command_exit = {
+            C "c",
+        },
+
+        command_validate = {
+            "\n",
+            "\r"
+        },
+    }
+end
 
 function Confirm:render()
     Prompt.render(self)
