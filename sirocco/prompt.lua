@@ -128,9 +128,9 @@ function Prompt:registerKeybinding()
             C "d",
         },
 
-        -- TODO: those should be signals
-        command_exit = {
-            C "c",
+        command_abort = {
+            C "c", -- TODO: should be signal
+            C "g"
         },
 
         command_backward_word = {
@@ -519,7 +519,7 @@ function Prompt:command_delete() -- Control-d
             self.buffer:sub(1, math.max(1, self.bufferOffset - 1))
             .. self.buffer:sub(self.bufferOffset + 1)
     else
-        self:command_exit()
+        self:command_abort()
     end
 end
 
@@ -625,7 +625,7 @@ function Prompt:command_validate()
     self.pendingBuffer = ""
 end
 
-function Prompt:command_exit()
+function Prompt:command_abort()  -- Control-g, Control-c
     self:after()
     os.exit()
 end
@@ -660,11 +660,6 @@ function Prompt:command_forward_word() -- Meta-f
 end
 
 function Prompt:command_transpose_words() -- Meta-t
-end
-
--- TODO
-
-function Prompt:command_abort() -- Control-g
 end
 
 function Prompt:command_get_next_history() -- Control-n
