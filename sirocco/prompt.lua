@@ -83,11 +83,13 @@ function Prompt:registerKeybinding()
 
         command_backward_char = {
             Prompt.escapeCodes.key_left,
+            "\2", -- C-b
             "\27[D" -- backup
         },
 
         command_forward_char = {
             Prompt.escapeCodes.key_right,
+            "\6", -- C-f
             "\27[C" -- backup
         },
 
