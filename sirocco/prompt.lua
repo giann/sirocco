@@ -122,7 +122,11 @@ function Prompt:registerKeybinding()
 
         command_unix_word_rubout = {
             "\23", -- C-w
-        }
+        },
+
+        command_transpose_chars = {
+            "\20", -- C-t
+        },
     }
 end
 
@@ -242,7 +246,7 @@ end
 -- Move offset by increment and move cursor accordingly
 function Prompt:moveOffsetBy(chars)
     if chars > 0 then
-        chars = math.min(utf8.len(self.buffer) - self.bufferOffset, chars)
+        chars = math.min(utf8.len(self.buffer) - self.bufferOffset + 1, chars)
 
         if chars > 0 then
             self.bufferOffset = self.bufferOffset + chars
@@ -570,6 +574,20 @@ function Prompt:command_forward_search_history() -- Control-s
 end
 
 function Prompt:command_transpose_chars() -- Control-t
+    local len = utf8.len(self.buffer)
+    if len > 1 and self.bufferOffset > 1 then
+        local offset = math.max(1, (self.bufferOffset > len and len or self.bufferOffset) - 1)
+
+        self.buffer =
+            self.buffer:sub(1, offset - 1)
+            .. self.buffer:sub(offset + 1, offset + 1)
+            .. self.buffer:sub(offset, offset)
+            .. self.buffer:sub(offset + 2)
+
+        if self.bufferOffset <= len then
+            self:moveOffsetBy(1)
+        end
+    end
 end
 
 function Prompt:command_unix_line_discard() -- Control-u
