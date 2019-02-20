@@ -1,7 +1,7 @@
-local Class   = require "hump.class"
-local winsize = require "sirocco.winsize"
-local char    = require "sirocco.char"
-local C, M    = char.C, char.M
+local Class     = require "hump.class"
+local winsize   = require "sirocco.winsize"
+local char      = require "sirocco.char"
+local C, M, Esc = char.C, char.M, char.Esc
 
 -- TODO: tui.getnext reads from stdin by default
 local tui    = require "tui"
@@ -131,6 +131,21 @@ function Prompt:registerKeybinding()
         -- TODO: those should be signals
         command_exit = {
             C "c",
+        },
+
+        command_backward_word = {
+            M "b",
+            Esc "b"
+        },
+
+        command_forward_word = {
+            M "f",
+            Esc "f"
+        },
+
+        command_kill_word = {
+            M "d",
+            Esc "d"
         },
 
         command_validate = {
@@ -488,9 +503,7 @@ function Prompt:ask()
     return result
 end
 
--- Commands
-function Prompt:command_set_mark() -- Control-@
-end
+-- COMMANDS
 
 function Prompt:command_beg_of_line() -- Control-a
     self:setOffset(1)
@@ -498,9 +511,6 @@ end
 
 function Prompt:command_backward_char() -- Control-b, left arrow
     self:moveOffsetBy(-1)
-end
-
-function Prompt:command_command_func_t() -- Control-c o x z [ \ ^\
 end
 
 function Prompt:command_delete() -- Control-d
@@ -519,12 +529,6 @@ end
 
 function Prompt:command_forward_char() -- Control-f, right arrow
     self:moveOffsetBy(1)
-end
-
-function Prompt:command_abort() -- Control-g
-end
-
-function Prompt:command_rubout() -- Control-h
 end
 
 function Prompt:command_complete() -- Control-i, tab
@@ -575,21 +579,6 @@ function Prompt:command_clear_screen() -- Control-l
     self.output:write(Prompt.escapeCodes.clr_eos)
 end
 
-function Prompt:command_get_next_history() -- Control-n
-end
-
-function Prompt:command_get_previous_history() -- Control-p
-end
-
-function Prompt:command_quoted_insert() -- Control-q v
-end
-
-function Prompt:command_reverse_search_history() -- Control-r
-end
-
-function Prompt:command_forward_search_history() -- Control-s
-end
-
 function Prompt:command_transpose_chars() -- Control-t
     local len = utf8.len(self.buffer)
     if len > 1 and self.bufferOffset > 1 then
@@ -621,15 +610,6 @@ function Prompt:command_unix_word_rubout() -- Control-w
     end
 end
 
-function Prompt:command_yank() -- Control-y
-end
-
-function Prompt:command_char_search() -- Control-]
-end
-
-function Prompt:command_undo_command() -- Control-_
-end
-
 function Prompt:command_delete_back()
     if self.currentPosition.x > 0 then
         self:moveOffsetBy(-1)
@@ -649,6 +629,142 @@ function Prompt:command_exit()
     self:after()
     os.exit()
 end
+
+-- See: https://github.com/Distrotech/readline/blob/master/emacs_keymap.c
+
+function Prompt:command_backward_word() -- Meta-b
+    local s, e = self.buffer:sub(1, self.bufferOffset - 1):find("[%g]+[^%g]*$")
+
+    if e then
+        self:moveOffsetBy(s - e - 1)
+    end
+end
+
+function Prompt:command_kill_word() -- Meta-d
+    local s, e = self.buffer:sub(self.bufferOffset):find("[%g]+[^%g]*")
+    s, e = self.bufferOffset + s - 1, self.bufferOffset + e - 1
+
+    if s then
+        self.buffer =
+            self.buffer:sub(1, s - 1)
+            .. self.buffer:sub(e + 1)
+    end
+end
+
+function Prompt:command_forward_word() -- Meta-f
+    local _, e = self.buffer:sub(self.bufferOffset):find("[%g]+[^%g]*")
+
+    if e then
+        self:moveOffsetBy(e)
+    end
+end
+
+function Prompt:command_transpose_words() -- Meta-t
+end
+
+-- TODO
+
+function Prompt:command_abort() -- Control-g
+end
+
+function Prompt:command_get_next_history() -- Control-n
+end
+
+function Prompt:command_get_previous_history() -- Control-p
+end
+
+function Prompt:command_reverse_search_history() -- Control-r
+end
+
+function Prompt:command_forward_search_history() -- Control-s
+end
+
+function Prompt:command_yank() -- Control-y
+end
+
+function Prompt:command_undo_command() -- Control-_
+end
+
+function Prompt:command_possible_completions() -- Meta-=, Meta-?
+end
+
+function Prompt:command_beginning_of_history() -- Meta-<
+end
+
+function Prompt:command_end_of_history() -- Meta->
+end
+
+function Prompt:command_delete_horizontal_space() -- Meta-\
+end
+
+function Prompt:command_capitalize_word() -- Meta-c
+end
+
+function Prompt:command_downcase_word() -- Meta-l
+end
+
+function Prompt:command_upcase_word() -- Meta-u
+end
+
+-- Here for reference, won't likely be implemented
+
+function Prompt:command_set_mark() -- Control-@
+end
+
+function Prompt:command_rubout() -- Control-h
+end
+
+function Prompt:command_quoted_insert() -- Control-q v
+end
+
+function Prompt:command_char_search() -- Control-]
+end
+
+function Prompt:command_backward_kill_word() -- Meta-Control-h
+end
+
+function Prompt:command_tab_insert() -- Meta-Control-i
+end
+
+function Prompt:command_revert_line() -- Meta-Control-r
+end
+
+function Prompt:command_yank_nth_arg() -- Meta-Control-y
+end
+
+function Prompt:command_backward_char_search() -- Meta-Control-]
+end
+
+function Prompt:command_set_mark() -- Meta-SPACE
+end
+
+function Prompt:command_insert_comment() -- Meta-#
+end
+
+function Prompt:command_tilde_expand() -- Meta-&, Meta-~
+end
+
+function Prompt:command_insert_completions() -- Meta-*
+end
+
+function Prompt:command_digit_argument() -- Meta--
+end
+
+function Prompt:command_yank_last_arg() -- Meta-., Meta-_
+end
+
+function Prompt:command_noninc_forward_search() -- Meta-n
+end
+
+function Prompt:command_noninc_reverse_search() -- Meta-p
+end
+
+function Prompt:command_revert_line() -- Meta-r
+end
+
+function Prompt:command_yank_pop() -- Meta-y
+end
+
 
 -- If can't find terminfo, fallback to minimal list of necessary codes
 local ok, terminfo = pcall(require "tui.terminfo".find)
