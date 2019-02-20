@@ -1,6 +1,6 @@
 
 package = "sirocco"
-version = "0.0.1-2"
+version = "0.0.1-3"
 rockspec_format = "3.0"
 
 source = {

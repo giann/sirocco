@@ -86,13 +86,13 @@ function Prompt:registerKeybinding()
         command_backward_char = {
             Prompt.escapeCodes.key_left,
             C "b",
-            "\27[D" -- backup
+            Esc "[D" -- backup
         },
 
         command_forward_char = {
             Prompt.escapeCodes.key_right,
             C "f",
-            "\27[C" -- backup
+            Esc "[C" -- backup
         },
 
         command_complete = {
@@ -767,21 +767,21 @@ local ok, terminfo = pcall(require "tui.terminfo".find)
 Prompt.escapeCodes = ok and terminfo or {}
 
 -- Make sure we got everything we need
-Prompt.escapeCodes.cursor_invisible = Prompt.escapeCodes.cursor_invisible or "\27[?25l"
-Prompt.escapeCodes.cursor_visible   = Prompt.escapeCodes.cursor_visible   or "\27[?25h"
-Prompt.escapeCodes.clr_eos          = Prompt.escapeCodes.clr_eos          or "\27[J"
-Prompt.escapeCodes.cursor_address   = Prompt.escapeCodes.cursor_address   or "\27[%i%p1%d;%p2%dH"
+Prompt.escapeCodes.cursor_invisible = Prompt.escapeCodes.cursor_invisible or Esc "[?25l"
+Prompt.escapeCodes.cursor_visible   = Prompt.escapeCodes.cursor_visible   or Esc "[?25h"
+Prompt.escapeCodes.clr_eos          = Prompt.escapeCodes.clr_eos          or Esc "[J"
+Prompt.escapeCodes.cursor_address   = Prompt.escapeCodes.cursor_address   or Esc "[%i%p1%d;%p2%dH"
 -- Get cursor position (https://invisible-island.net/ncurses/terminfo.ti.html)
-Prompt.escapeCodes.user7            = Prompt.escapeCodes.user7            or "\27[6n"
-Prompt.escapeCodes.key_left         = Prompt.escapeCodes.key_left         or "\27[D"
-Prompt.escapeCodes.key_right        = Prompt.escapeCodes.key_right        or "\27[C"
-Prompt.escapeCodes.key_down         = Prompt.escapeCodes.key_down         or "\27[B"
-Prompt.escapeCodes.key_up           = Prompt.escapeCodes.key_up           or "\27[A"
+Prompt.escapeCodes.user7            = Prompt.escapeCodes.user7            or Esc "[6n"
+Prompt.escapeCodes.key_left         = Prompt.escapeCodes.key_left         or Esc "[D"
+Prompt.escapeCodes.key_right        = Prompt.escapeCodes.key_right        or Esc "[C"
+Prompt.escapeCodes.key_down         = Prompt.escapeCodes.key_down         or Esc "[B"
+Prompt.escapeCodes.key_up           = Prompt.escapeCodes.key_up           or Esc "[A"
 Prompt.escapeCodes.key_backspace    = Prompt.escapeCodes.key_backspace    or "\127"
 Prompt.escapeCodes.tab              = Prompt.escapeCodes.tab              or "\9"
-Prompt.escapeCodes.key_home         = Prompt.escapeCodes.key_home         or "\27" .. "0H"
-Prompt.escapeCodes.key_end          = Prompt.escapeCodes.key_end          or "\27" .. "0F"
-Prompt.escapeCodes.key_enter        = Prompt.escapeCodes.key_enter        or "\27" .. "0M"
-Prompt.escapeCodes.parm_index       = Prompt.escapeCodes.parm_inde        or "\27[%p1%dS"
+Prompt.escapeCodes.key_home         = Prompt.escapeCodes.key_home         or Esc "0H"
+Prompt.escapeCodes.key_end          = Prompt.escapeCodes.key_end          or Esc "0F"
+Prompt.escapeCodes.key_enter        = Prompt.escapeCodes.key_enter        or Esc "0M"
+Prompt.escapeCodes.parm_index       = Prompt.escapeCodes.parm_inde        or Esc "[%p1%dS"
 
 return Prompt
