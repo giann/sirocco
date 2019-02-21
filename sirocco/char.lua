@@ -18,11 +18,12 @@ local function ctrl(c)
     return string.char(c:byte() & control_character_mask)
 end
 
+-- Nobody really has a Meta key, use Esc instead
 local function meta(c)
     return string.char(c:byte() | meta_character_bit)
 end
 
-local function ESC(c)
+local function Esc(c)
     return "\27" .. c
 end
 
@@ -39,7 +40,7 @@ return {
     isM = meta_char,
     C   = ctrl,
     M   = meta,
-    Esc = ESC,
+    Esc = Esc,
     unM = unMeta,
     unC = unCtrl,
 }

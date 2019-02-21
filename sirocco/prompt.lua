@@ -124,6 +124,7 @@ function Prompt:registerKeybinding()
 
         command_unix_word_rubout = {
             C "w",
+            Esc "\127"
         },
 
         command_transpose_chars = {
@@ -141,12 +142,16 @@ function Prompt:registerKeybinding()
 
         command_backward_word = {
             M "b",
-            Esc "b"
+            Esc "b",
+            Esc(Prompt.escapeCodes.key_left),
+            Esc "[1;3D", -- Alt+left on termite
         },
 
         command_forward_word = {
             M "f",
-            Esc "f"
+            Esc "f",
+            Esc(Prompt.escapeCodes.key_right),
+            Esc "[1;3C",  -- Alt+left on termite
         },
 
         command_kill_word = {
