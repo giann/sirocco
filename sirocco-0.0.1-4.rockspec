@@ -29,11 +29,9 @@ build = {
         ["tui.tparm"]          = "lib/tui/tui/tparm.lua",
         ["tui.tput"]           = "lib/tui/tui/tput.lua",
         ["tui.util"]           = "lib/tui/tui/util.lua",
+        ["utf8_simple"]        = "lib/utf8_simple/utf8_simple.lua"
     },
     type = "builtin",
-    libraries = {
-        "glib-2.0"
-    }
 }
 
 dependencies = {
