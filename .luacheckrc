@@ -5,5 +5,5 @@ ignore = {
 }
 
 globals = {
-
+    "string.utf8sub"
 }

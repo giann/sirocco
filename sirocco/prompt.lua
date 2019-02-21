@@ -11,6 +11,16 @@ local tparm  = require "tui.tparm".tparm
 local term   = require "term"
 local colors = term.colors
 
+-- Utf8 aware sub
+string.utf8sub = function(str, start, finish)
+    return start <= utf8.len(str)
+        and (str:sub(
+            utf8.offset(str, start) or start,
+            type(finish) == "number" and (finish ~= 0 and utf8.offset(str, finish) or finish) or nil
+        ))
+        or ""
+end
+
 local Prompt
 Prompt = Class {
 
@@ -73,7 +83,7 @@ Prompt = Class {
     len = function(input)
         -- utf8.len will fail if input is not valid utf8
         return utf8.len(input) or #input
-    end
+    end,
 
 }
 
@@ -184,7 +194,7 @@ function Prompt:handleBindings()
             if code == self.pendingBuffer then
                 validEscapeCode = true
                 break
-            elseif self.pendingBuffer == code:sub(1, #self.pendingBuffer) then
+            elseif self.pendingBuffer == code:utf8sub(1, #self.pendingBuffer) then
                 startOfValidEscapeCode = true
             end
         end
@@ -208,9 +218,9 @@ end
 function Prompt:insertAtCurrentPosition(text)
     -- Insert text at currentPosition
     self.buffer =
-        self.buffer:sub(1, self.bufferOffset - 1)
+        self.buffer:utf8sub(1, self.bufferOffset - 1)
         .. text
-        .. self.buffer:sub(self.bufferOffset)
+        .. self.buffer:utf8sub(self.bufferOffset)
 end
 
 function Prompt.textHeight(text, width)
@@ -264,9 +274,9 @@ function Prompt:renderDisplayBuffer()
 
     -- while #buffer > 0 do
     --     self.displayBuffer = self.displayBuffer
-    --         .. buffer:sub(1, self.terminalWidth)
+    --         .. buffer:utf8sub(1, self.terminalWidth)
 
-    --     buffer = buffer:sub(self.terminalWidth + 1)
+    --     buffer = buffer:utf8sub(self.terminalWidth + 1)
     -- end
 
     -- Terminal wraps printed text on its own
@@ -288,7 +298,7 @@ function Prompt:moveOffsetBy(chars)
             self.bufferOffset = self.bufferOffset + chars
         end
     elseif chars < 0 then
-        self.bufferOffset = math.max(0, self.bufferOffset + chars)
+        self.bufferOffset = math.max(1, self.bufferOffset + chars)
     end
 
     self:updateCurrentPosition()
@@ -369,9 +379,9 @@ function Prompt:render()
         local prompt = self.prompt .. inlinePossibleValues
         local part
         -- TODO: yet another way of doing this ?!
-        while #prompt > 0 do
-            part = prompt:sub(1, self.terminalWidth)
-            prompt = prompt:sub(self.terminalWidth + 1)
+        while utf8.len(prompt) > 0 do
+            part = prompt:utf8sub(1, self.terminalWidth)
+            prompt = prompt:utf8sub(self.terminalWidth + 1)
 
             y = y + 1
 
@@ -527,8 +537,8 @@ end
 function Prompt:command_delete() -- Control-d
     if Prompt.len(self.buffer) > 0 then
         self.buffer =
-            self.buffer:sub(1, math.max(1, self.bufferOffset - 1))
-            .. self.buffer:sub(self.bufferOffset + 1)
+            self.buffer:utf8sub(1, math.max(1, self.bufferOffset - 1))
+            .. self.buffer:utf8sub(self.bufferOffset + 1)
     else
         self:command_abort()
     end
@@ -547,7 +557,7 @@ function Prompt:command_complete() -- Control-i, tab
         local matches = {}
         local count = 0
         for _, value in ipairs(self.possibleValues) do
-            if value:sub(1, #self.buffer) == self.buffer then
+            if value:utf8sub(1, #self.buffer) == self.buffer then
                 table.insert(matches, value)
                 count = count + 1
             end
@@ -568,7 +578,7 @@ function Prompt:command_complete() -- Control-i, tab
 end
 
 function Prompt:command_kill_line() -- Control-k
-    self.buffer = self.buffer:sub(
+    self.buffer = self.buffer:utf8sub(
         1,
         self.bufferOffset - 1
     )
@@ -596,10 +606,10 @@ function Prompt:command_transpose_chars() -- Control-t
         local offset = math.max(1, (self.bufferOffset > len and len or self.bufferOffset) - 1)
 
         self.buffer =
-            self.buffer:sub(1, offset - 1)
-            .. self.buffer:sub(offset + 1, offset + 1)
-            .. self.buffer:sub(offset, offset)
-            .. self.buffer:sub(offset + 2)
+            self.buffer:utf8sub(1, offset - 1)
+            .. self.buffer:utf8sub(offset + 1, offset + 1)
+            .. self.buffer:utf8sub(offset, offset)
+            .. self.buffer:utf8sub(offset + 2)
 
         if self.bufferOffset <= len then
             self:moveOffsetBy(1)
@@ -613,21 +623,21 @@ function Prompt:command_unix_line_discard() -- Control-u
 end
 
 function Prompt:command_unix_word_rubout() -- Control-w
-    local s, e = self.buffer:sub(1, self.bufferOffset - 1):find("[%g]+[^%g]*$")
+    local s, e = self.buffer:utf8sub(1, self.bufferOffset - 1):find("[%g]+[^%g]*$")
 
     if s then
-        self.buffer = self.buffer:sub(1, s - 1) .. self.buffer:sub(e + 1)
+        self.buffer = self.buffer:utf8sub(1, s - 1) .. self.buffer:utf8sub(e + 1)
         self:moveOffsetBy(s - e - 1)
     end
 end
 
 function Prompt:command_delete_back()
-    if self.currentPosition.x > 0 then
+    if self.bufferOffset > 1 then
         self:moveOffsetBy(-1)
 
         -- Delete char at currentPosition
-        self.buffer = self.buffer:sub(1, self.bufferOffset-1)
-            .. self.buffer:sub(self.bufferOffset + 1)
+        self.buffer = self.buffer:utf8sub(1, self.bufferOffset-1)
+            .. self.buffer:utf8sub(self.bufferOffset + 1)
     end
 end
 
@@ -644,7 +654,7 @@ end
 -- See: https://github.com/Distrotech/readline/blob/master/emacs_keymap.c
 
 function Prompt:command_backward_word() -- Meta-b
-    local s, e = self.buffer:sub(1, self.bufferOffset - 1):find("[%g]+[^%g]*$")
+    local s, e = self.buffer:utf8sub(1, self.bufferOffset - 1):find("[%g]+[^%g]*$")
 
     if e then
         self:moveOffsetBy(s - e - 1)
@@ -652,18 +662,18 @@ function Prompt:command_backward_word() -- Meta-b
 end
 
 function Prompt:command_kill_word() -- Meta-d
-    local s, e = self.buffer:sub(self.bufferOffset):find("[%g]+[^%g]*")
+    local s, e = self.buffer:utf8sub(self.bufferOffset):find("[%g]+[^%g]*")
     s, e = self.bufferOffset + s - 1, self.bufferOffset + e - 1
 
     if s then
         self.buffer =
-            self.buffer:sub(1, s - 1)
-            .. self.buffer:sub(e + 1)
+            self.buffer:utf8sub(1, s - 1)
+            .. self.buffer:utf8sub(e + 1)
     end
 end
 
 function Prompt:command_forward_word() -- Meta-f
-    local _, e = self.buffer:sub(self.bufferOffset):find("[%g]+[^%g]*")
+    local _, e = self.buffer:utf8sub(self.bufferOffset):find("[%g]+[^%g]*")
 
     if e then
         self:moveOffsetBy(e)

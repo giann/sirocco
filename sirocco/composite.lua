@@ -61,7 +61,7 @@ function Composite:render()
     for i, field in ipairs(self.fields) do
         if not field.buffer or Prompt.len(field.buffer) == 0 then
             -- Truncate placeholder to field length
-            local placeholder = (field.placeholder or ""):sub(1, field.length)
+            local placeholder = (field.placeholder or ""):utf8sub(1, field.length)
             -- Add padding to match field length
             placeholder = placeholder .. (" "):rep(field.length - Prompt.len(placeholder))
 
@@ -134,9 +134,9 @@ function Composite:processInput(input)
 
     -- Insert in current field
     currentField.buffer =
-        (currentField.buffer:sub(1, self.currentPosition.x - currentField.position)
+        (currentField.buffer:utf8sub(1, self.currentPosition.x - currentField.position)
         .. input
-        .. currentField.buffer:sub(self.currentPosition.x + 1 - currentField.position))
+        .. currentField.buffer:utf8sub(self.currentPosition.x + 1 - currentField.position))
 
     -- Increment current position
     self.currentPosition.x = self.currentPosition.x + Prompt.len(input)
@@ -167,7 +167,7 @@ end
 
 function Composite:command_kill_line()
     local currentField = self:getCurrentField()
-    currentField.buffer = currentField.buffer:sub(
+    currentField.buffer = currentField.buffer:utf8sub(
         1,
         self.currentPosition.x - currentField.position
     )
@@ -181,8 +181,8 @@ function Composite:command_delete_back()
         local currentField = self:getCurrentField()
 
         -- Delete char at currentPosition
-        currentField.buffer = currentField.buffer:sub(1, self.currentPosition.x - currentField.position)
-            .. currentField.buffer:sub(self.currentPosition.x + 2 - currentField.position)
+        currentField.buffer = currentField.buffer:utf8sub(1, self.currentPosition.x - currentField.position)
+            .. currentField.buffer:utf8sub(self.currentPosition.x + 2 - currentField.position)
     end
 end
 
