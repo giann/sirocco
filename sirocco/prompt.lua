@@ -40,7 +40,7 @@ Prompt = Class {
         self.displayBuffer = options.default or ""
         -- Unaltered buffer
         self.buffer = options.default or ""
-        -- Current offset in buffer (has to be translated in (x,y) cursor position)
+        -- Current utf8-aware offset in buffer (has to be translated in (x,y) cursor position)
         self.bufferOffset = options.default and Prompt.len(options.default) + 1 or 1
 
         self.currentPosition = {
@@ -205,7 +205,9 @@ function Prompt:getHeight()
 end
 
 function Prompt:updateCurrentPosition()
-    local offset = self.promptPosition.x + self.bufferOffset
+    -- Some utf8 chars can take more than one cell
+    local visualOffset = self.buffer:utf8sub(1, self.bufferOffset - 1):utf8width() + 1
+    local offset = self.promptPosition.x + visualOffset
 
     local rows = 0
     while offset - 1 > self.terminalWidth do
@@ -219,16 +221,6 @@ end
 
 -- Take value buffer and format/wrap it
 function Prompt:renderDisplayBuffer()
-    -- local buffer = self.buffer
-    -- self.displayBuffer = ""
-
-    -- while #buffer > 0 do
-    --     self.displayBuffer = self.displayBuffer
-    --         .. buffer:utf8sub(1, self.terminalWidth)
-
-    --     buffer = buffer:utf8sub(self.terminalWidth + 1)
-    -- end
-
     -- Terminal wraps printed text on its own
     self.displayBuffer = self.buffer
 end

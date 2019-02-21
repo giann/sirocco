@@ -36,17 +36,7 @@ local function unCtrl(c)
 end
 
 -- Utf8 aware sub
-string.utf8sub = function(self, start, finish)
-    return start <= utf8.len(self)
-        and (self:sub(
-            utf8.offset(self, start) or start,
-            finish ~= nil
-                and (finish ~= 0
-                        and utf8.offset(self, finish + 1)
-                        or finish) or nil
-        ))
-        or ""
-end
+string.utf8sub = require "utf8_simple".sub
 
 string.utf8width = require "sirocco.utf8".width
 
