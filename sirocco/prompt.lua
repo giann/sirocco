@@ -42,7 +42,7 @@ Prompt = Class {
         self.buffer = options.default or ""
         self.pendingBuffer = ""
         -- Current offset in buffer (has to be translated in (x,y) cursor position)
-        self.bufferOffset = options.default and utf8.len(options.default) + 1 or 1
+        self.bufferOffset = options.default and Prompt.len(options.default) + 1 or 1
 
         self.currentPosition = {
             x = 0,
@@ -67,6 +67,12 @@ Prompt = Class {
         self.message = nil
 
         self:registerKeybinding()
+    end,
+
+    -- Must be use for cursor position, NOT to get len of a string
+    len = function(input)
+        -- utf8.len will fail if input is not valid utf8
+        return utf8.len(input) or #input
     end
 
 }
@@ -207,7 +213,7 @@ function Prompt.textHeight(text, width)
     for line in text:gmatch("([^\n]*)\n") do
         height = height + 1
 
-        for _ = 130, utf8.len(line), width do
+        for _ = 130, Prompt.len(line), width do
             height = height + 1
         end
     end
@@ -271,7 +277,7 @@ end
 -- Move offset by increment and move cursor accordingly
 function Prompt:moveOffsetBy(chars)
     if chars > 0 then
-        chars = math.min(utf8.len(self.buffer) - self.bufferOffset + 1, chars)
+        chars = math.min(Prompt.len(self.buffer) - self.bufferOffset + 1, chars)
 
         if chars > 0 then
             self.bufferOffset = self.bufferOffset + chars
@@ -290,7 +296,7 @@ function Prompt:processInput(input)
 
     self:insertAtCurrentPosition(input)
 
-    self.bufferOffset = self.bufferOffset + utf8.len(input)
+    self.bufferOffset = self.bufferOffset + Prompt.len(input)
 
     self:updateCurrentPosition()
 
@@ -341,7 +347,7 @@ function Prompt:render()
     -- Print placeholder
     if self.placeholder
         and (not self.promptPosition.x or not self.promptPosition.y)
-        and utf8.len(self.displayBuffer) == 0 then
+        and Prompt.len(self.displayBuffer) == 0 then
         self.output:write(
             colors.bright .. colors.black
             .. (self.placeholder or "")
@@ -382,7 +388,7 @@ function Prompt:render()
         end
 
         self.promptPosition.x, self.promptPosition.y =
-            x + utf8.len(lastLine) + (self.showPossibleValues and utf8.len(inlinePossibleValues) or 0),
+            x + Prompt.len(lastLine) + (self.showPossibleValues and Prompt.len(inlinePossibleValues) or 0),
             y
     end
 
@@ -437,13 +443,13 @@ function Prompt:processedResult()
 end
 
 function Prompt:endCondition()
-    if self.finished and self.required and utf8.len(self.buffer) == 0 then
+    if self.finished and self.required and Prompt.len(self.buffer) == 0 then
         self.finished = false
         self.message = colors.red .. "Answer is required" .. colors.reset
     end
 
     -- Only validate if required or if something is in the buffer
-    if self.finished and self.validator and (self.required or utf8.len(self.buffer) > 0) then
+    if self.finished and self.validator and (self.required or Prompt.len(self.buffer) > 0) then
         local ok, message = self.validator(self.buffer)
         self.finished = self.finished and (ok or not self.required)
         self.message = message
@@ -514,7 +520,7 @@ function Prompt:command_backward_char() -- Control-b, left arrow
 end
 
 function Prompt:command_delete() -- Control-d
-    if utf8.len(self.buffer) > 0 then
+    if Prompt.len(self.buffer) > 0 then
         self.buffer =
             self.buffer:sub(1, math.max(1, self.bufferOffset - 1))
             .. self.buffer:sub(self.bufferOffset + 1)
@@ -524,7 +530,7 @@ function Prompt:command_delete() -- Control-d
 end
 
 function Prompt:command_end_of_line() -- Control-e
-    self:setOffset(utf8.len(self.buffer) + 1)
+    self:setOffset(Prompt.len(self.buffer) + 1)
 end
 
 function Prompt:command_forward_char() -- Control-f, right arrow
@@ -546,7 +552,7 @@ function Prompt:command_complete() -- Control-i, tab
             self.message = table.concat(matches, " ")
         elseif count == 1 then
             self.buffer = matches[1]
-            self:setOffset(utf8.len(self.buffer) + 1)
+            self:setOffset(Prompt.len(self.buffer) + 1)
 
             if self.validator then
                 local _, message = self.validator(self.buffer)
@@ -580,7 +586,7 @@ function Prompt:command_clear_screen() -- Control-l
 end
 
 function Prompt:command_transpose_chars() -- Control-t
-    local len = utf8.len(self.buffer)
+    local len = Prompt.len(self.buffer)
     if len > 1 and self.bufferOffset > 1 then
         local offset = math.max(1, (self.bufferOffset > len and len or self.bufferOffset) - 1)
 

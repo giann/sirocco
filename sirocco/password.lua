@@ -23,7 +23,7 @@ local Password = Class {
 function Password:renderDisplayBuffer()
     self.displayBuffer = self.hidden
         and ""
-        or ("*"):rep(utf8.len(self.buffer))
+        or ("*"):rep(Prompt.len(self.buffer))
 end
 
 function Password:processInput(input)

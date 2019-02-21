@@ -30,7 +30,7 @@ function Composite:moveOffsetBy(chars)
             and i < #self.fields then
             self.currentPosition.x = self.fields[i + 1].position
         else
-            chars = math.min(utf8.len(currentField.buffer) - currentPosition, chars)
+            chars = math.min(Prompt.len(currentField.buffer) - currentPosition, chars)
 
             if chars > 0 then
                 self.currentPosition.x = self.currentPosition.x + chars
@@ -41,7 +41,7 @@ function Composite:moveOffsetBy(chars)
         if currentPosition + chars < 0
             and i > 1 then
             local previousField = self.fields[i - 1]
-            self.currentPosition.x = previousField.position + utf8.len(previousField.buffer)
+            self.currentPosition.x = previousField.position + Prompt.len(previousField.buffer)
         else
             self.currentPosition.x = math.max(currentField.position, self.currentPosition.x + chars)
         end
@@ -59,11 +59,11 @@ function Composite:render()
     local len = #self.fields
     local fieldPosition = 0
     for i, field in ipairs(self.fields) do
-        if not field.buffer or utf8.len(field.buffer) == 0 then
+        if not field.buffer or Prompt.len(field.buffer) == 0 then
             -- Truncate placeholder to field length
             local placeholder = (field.placeholder or ""):sub(1, field.length)
             -- Add padding to match field length
-            placeholder = placeholder .. (" "):rep(field.length - utf8.len(placeholder))
+            placeholder = placeholder .. (" "):rep(field.length - Prompt.len(placeholder))
 
             self.output:write(
                 colors.bright .. colors.black
@@ -77,7 +77,7 @@ function Composite:render()
                 field.position = fieldPosition
             end
         else
-            local buffer = field.buffer .. (" "):rep(field.length - utf8.len(field.buffer))
+            local buffer = field.buffer .. (" "):rep(field.length - Prompt.len(field.buffer))
 
             self.output:write(
                 buffer
@@ -85,7 +85,7 @@ function Composite:render()
             )
         end
 
-        fieldPosition = fieldPosition + field.length + (i < len and utf8.len(self.separator) or 0)
+        fieldPosition = fieldPosition + field.length + (i < len and Prompt.len(self.separator) or 0)
     end
 
     self:setCursor(
@@ -128,7 +128,7 @@ function Composite:processInput(input)
         and currentField.filter(input)
         or input
 
-    if utf8.len(currentField.buffer) >= currentField.length then
+    if Prompt.len(currentField.buffer) >= currentField.length then
         input = ""
     end
 
@@ -139,7 +139,7 @@ function Composite:processInput(input)
         .. currentField.buffer:sub(self.currentPosition.x + 1 - currentField.position))
 
     -- Increment current position
-    self.currentPosition.x = self.currentPosition.x + utf8.len(input)
+    self.currentPosition.x = self.currentPosition.x + Prompt.len(input)
 
     -- Validation
     if currentField.validator then
