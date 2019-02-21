@@ -50,7 +50,6 @@ Prompt = Class {
         self.displayBuffer = options.default or ""
         -- Unaltered buffer
         self.buffer = options.default or ""
-        self.pendingBuffer = ""
         -- Current offset in buffer (has to be translated in (x,y) cursor position)
         self.bufferOffset = options.default and Prompt.len(options.default) + 1 or 1
 
@@ -176,45 +175,6 @@ function Prompt:registerKeybinding()
     }
 end
 
-function Prompt:handleBindings()
-    local binding
-
-    for command, keys in pairs(self.keybinding) do
-        for _, key in ipairs(keys) do
-            if key == self.pendingBuffer then
-                binding = command
-            end
-        end
-    end
-
-    local validEscapeCode = false
-    local startOfValidEscapeCode = false
-    for _, code  in pairs(Prompt.escapeCodes) do
-        if type(code) == "string" then
-            if code == self.pendingBuffer then
-                validEscapeCode = true
-                break
-            elseif self.pendingBuffer == code:utf8sub(1, #self.pendingBuffer) then
-                startOfValidEscapeCode = true
-            end
-        end
-    end
-
-    if not validEscapeCode and not binding then
-        return startOfValidEscapeCode and "wait" or false
-    end
-
-    if binding then
-        self[binding](self)
-    else
-        return false
-    end
-
-    -- If we reach here, escape code was consumed
-    self.pendingBuffer = ""
-    return "consumed"
-end
-
 function Prompt:insertAtCurrentPosition(text)
     -- Insert text at currentPosition
     self.buffer =
@@ -324,18 +284,19 @@ function Prompt:processInput(input)
 end
 
 function Prompt:handleInput()
-    self.pendingBuffer = self.pendingBuffer .. tui.getnext()
+    local input = tui.getnext()
 
-    local handled = self:handleBindings()
+    for command, keys in pairs(self.keybinding) do
+        for _, key in ipairs(keys) do
+            if key == input then
+                self[command](self)
+                return true
+            end
+        end
+    end
 
     -- Not an escape code
-    if handled ~= "consumed"
-        and handled ~= "wait" then
-        self:processInput(self.pendingBuffer)
-
-        -- Consume pending
-        self.pendingBuffer = ""
-    end
+    self:processInput(input)
 end
 
 function Prompt:render()
