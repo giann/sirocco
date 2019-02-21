@@ -41,7 +41,7 @@ Prompt = Class {
         -- Unaltered buffer
         self.buffer = options.default or ""
         -- Current utf8-aware offset in buffer (has to be translated in (x,y) cursor position)
-        self.bufferOffset = options.default and Prompt.len(options.default) + 1 or 1
+        self.bufferOffset = options.default and options.default:utf8width() + 1 or 1
 
         self.currentPosition = {
             x = 0,
@@ -346,7 +346,7 @@ function Prompt:render()
         end
 
         self.promptPosition.x, self.promptPosition.y =
-            x + Prompt.len(lastLine) + (self.showPossibleValues and Prompt.len(inlinePossibleValues) or 0),
+            x + lastLine:utf8width() + (self.showPossibleValues and inlinePossibleValues:utf8width() or 0),
             y
     end
 

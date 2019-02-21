@@ -30,7 +30,7 @@ function Composite:moveOffsetBy(chars)
             and i < #self.fields then
             self.currentPosition.x = self.fields[i + 1].position
         else
-            chars = math.min(Prompt.len(currentField.buffer) - currentPosition, chars)
+            chars = math.min(currentField.buffer:utf8width() - currentPosition, chars)
 
             if chars > 0 then
                 self.currentPosition.x = self.currentPosition.x + chars
@@ -41,7 +41,7 @@ function Composite:moveOffsetBy(chars)
         if currentPosition + chars < 0
             and i > 1 then
             local previousField = self.fields[i - 1]
-            self.currentPosition.x = previousField.position + Prompt.len(previousField.buffer)
+            self.currentPosition.x = previousField.position + previousField.buffer:utf8width()
         else
             self.currentPosition.x = math.max(currentField.position, self.currentPosition.x + chars)
         end
@@ -59,11 +59,11 @@ function Composite:render()
     local len = #self.fields
     local fieldPosition = 0
     for i, field in ipairs(self.fields) do
-        if not field.buffer or Prompt.len(field.buffer) == 0 then
+        if not field.buffer or field.buffer:utf8width() == 0 then
             -- Truncate placeholder to field length
             local placeholder = (field.placeholder or ""):utf8sub(1, field.length)
             -- Add padding to match field length
-            placeholder = placeholder .. (" "):rep(field.length - Prompt.len(placeholder))
+            placeholder = placeholder .. (" "):rep(field.length - placeholder:utf8width())
 
             self.output:write(
                 colors.bright .. colors.black
@@ -85,7 +85,7 @@ function Composite:render()
             )
         end
 
-        fieldPosition = fieldPosition + field.length + (i < len and Prompt.len(self.separator) or 0)
+        fieldPosition = fieldPosition + field.length + (i < len and self.separator:utf8width() or 0)
     end
 
     self:setCursor(
@@ -139,7 +139,7 @@ function Composite:processInput(input)
         .. currentField.buffer:utf8sub(self.currentPosition.x + 1 - currentField.position))
 
     -- Increment current position
-    self.currentPosition.x = self.currentPosition.x + Prompt.len(input)
+    self.currentPosition.x = self.currentPosition.x + input:utf8width()
 
     -- Validation
     if currentField.validator then
