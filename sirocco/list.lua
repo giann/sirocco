@@ -2,8 +2,8 @@ local Class  = require "hump.class"
 local colors = require "term".colors
 
 local Prompt = require "sirocco.prompt"
-local char    = require "sirocco.char"
-local C, M    = char.C, char.M
+local char   = require "sirocco.char"
+local C, Esc = char.C, char.Esc
 
 local List = Class {
 
@@ -196,6 +196,8 @@ end
 function List:before()
     -- Hide cursor
     self.output:write(Prompt.escapeCodes.cursor_invisible)
+    -- Backup
+    self.output:write(Esc "[?25l")
 
     Prompt.before(self)
 end
@@ -213,6 +215,8 @@ function List:after(result)
 
     -- Show cursor
     self.output:write(Prompt.escapeCodes.cursor_visible)
+    -- Backup
+    self.output:write(Esc "[?25h")
 
     Prompt.after(self)
 end
