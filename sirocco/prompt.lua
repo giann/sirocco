@@ -11,16 +11,6 @@ local tparm  = require "tui.tparm".tparm
 local term   = require "term"
 local colors = term.colors
 
--- Utf8 aware sub
-string.utf8sub = function(str, start, finish)
-    return start <= utf8.len(str)
-        and (str:sub(
-            utf8.offset(str, start) or start,
-            type(finish) == "number" and (finish ~= 0 and utf8.offset(str, finish) or finish) or nil
-        ))
-        or ""
-end
-
 local Prompt
 Prompt = Class {
 

@@ -35,6 +35,21 @@ local function unCtrl(c)
     return string.upper(string.char(c:byte() | control_character_bit))
 end
 
+-- Utf8 aware sub
+string.utf8sub = function(self, start, finish)
+    return start <= utf8.len(self)
+        and (self:sub(
+            utf8.offset(self, start) or start,
+            finish ~= nil
+                and (finish ~= 0
+                        and utf8.offset(self, finish + 1)
+                        or finish) or nil
+        ))
+        or ""
+end
+
+string.utf8width = require "sirocco.utf8".width
+
 return {
     isC = ctrl_char,
     isM = meta_char,

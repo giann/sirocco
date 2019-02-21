@@ -23,6 +23,7 @@ build = {
         ["sirocco.prompt"]     = "sirocco/prompt.lua",
         ["sirocco.char"]       = "sirocco/char.lua",
         ["sirocco.winsize"]    = "sirocco/winsize.c",
+        ["sirocco.utf8"]       = "sirocco/utf8.c",
         ["tui"]                = "lib/tui/tui/init.lua",
         ["tui.filters"]        = "lib/tui/tui/filters.lua",
         ["tui.terminfo"]       = "lib/tui/tui/terminfo.lua",
@@ -31,6 +32,9 @@ build = {
         ["tui.util"]           = "lib/tui/tui/util.lua",
     },
     type = "builtin",
+    libraries = {
+        "glib-2.0"
+    }
 }
 
 dependencies = {
