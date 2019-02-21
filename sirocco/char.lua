@@ -1,3 +1,5 @@
+local wcwidth = require "wcwidth"
+
 local control_character_threshold = 0x020 -- Smaller than this is control.
 local control_character_mask      = 0x1f  -- 0x20 - 1
 local meta_character_threshold    = 0x07f -- Larger than this is Meta.
@@ -38,7 +40,18 @@ end
 -- Utf8 aware sub
 string.utf8sub = require "utf8_simple".sub
 
-string.utf8width = require "sirocco.utf8".width
+string.utf8width = function(self)
+    local len = 0
+
+    for _, rune in utf8.codes(self) do
+        local l = wcwidth(rune)
+        if l >= 0 then
+            len = len + l
+        end
+    end
+
+    return len
+end
 
 return {
     isC = ctrl_char,

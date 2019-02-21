@@ -1,6 +1,6 @@
 
 package = "sirocco"
-version = "0.0.1-3"
+version = "0.0.1-4"
 rockspec_format = "3.0"
 
 source = {
@@ -23,7 +23,6 @@ build = {
         ["sirocco.prompt"]     = "sirocco/prompt.lua",
         ["sirocco.char"]       = "sirocco/char.lua",
         ["sirocco.winsize"]    = "sirocco/winsize.c",
-        ["sirocco.utf8"]       = "sirocco/utf8.c",
         ["tui"]                = "lib/tui/tui/init.lua",
         ["tui.filters"]        = "lib/tui/tui/filters.lua",
         ["tui.terminfo"]       = "lib/tui/tui/terminfo.lua",
@@ -40,5 +39,6 @@ build = {
 dependencies = {
     "lua >= 5.3",
     "lua-term >= 0.7-1",
-    "hump >= 0.4-2"
+    "hump >= 0.4-2",
+    "wcwidth >= 0.3-1"
 }
