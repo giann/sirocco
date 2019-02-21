@@ -1,4 +1,23 @@
 local wcwidth = require "wcwidth"
+local filters = require "tui.filters"
+
+-- Overwrite default filter to add utf8
+filters.default_chain = filters.make_chain {
+    -- Always before CSI
+    filters.mouse;
+    -- These can be in any order
+    filters.SS2;
+    filters.SS3;
+    filters.CSI;
+    filters.OSC;
+    filters.DCS;
+    filters.SOS;
+    filters.PM;
+    filters.APC;
+    -- Should be before ESC but after CSI and OSC
+    filters.linux_quirks;
+    filters.multibyte_UTF8;
+}
 
 local control_character_threshold = 0x020 -- Smaller than this is control.
 local control_character_mask      = 0x1f  -- 0x20 - 1

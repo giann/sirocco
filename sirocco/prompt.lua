@@ -2,10 +2,8 @@ local Class     = require "hump.class"
 local winsize   = require "sirocco.winsize"
 local char      = require "sirocco.char"
 local C, M, Esc = char.C, char.M, char.Esc
-
--- TODO: tui.getnext reads from stdin by default
-local tui    = require "tui"
-local tparm  = require "tui.tparm".tparm
+local tui       = require "tui"
+local tparm     = require "tui.tparm".tparm
 
 -- TODO: remove
 local term   = require "term"
