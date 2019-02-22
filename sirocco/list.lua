@@ -177,6 +177,10 @@ function List:processedResult()
 end
 
 function List:endCondition()
+    if self.finished == "force" then
+        return true
+    end
+
     local count = 0
     for _, v in pairs(self.chosen) do
         count = count + (v and 1 or 0)

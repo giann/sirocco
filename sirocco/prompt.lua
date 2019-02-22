@@ -132,7 +132,7 @@ function Prompt:registerKeybinding()
             C "d",
         },
 
-        command_abort = {
+        command_exit = {
             C "c", -- TODO: should be signal
             C "g"
         },
@@ -399,6 +399,10 @@ function Prompt:processedResult()
 end
 
 function Prompt:endCondition()
+    if self.finished == "force" then
+        return true
+    end
+
     if self.finished and self.required and Prompt.len(self.buffer) == 0 then
         self.finished = false
         self.message = colors.red .. "Answer is required" .. colors.reset
@@ -481,7 +485,7 @@ function Prompt:command_delete() -- Control-d
             self.buffer:utf8sub(1, math.max(1, self.bufferOffset - 1))
             .. self.buffer:utf8sub(self.bufferOffset + 1)
     else
-        self:command_abort()
+        self:command_exit()
     end
 end
 
@@ -587,7 +591,11 @@ function Prompt:command_validate()
     self.pendingBuffer = ""
 end
 
-function Prompt:command_abort()  -- Control-g, Control-c
+function Prompt:command_abort()
+    self.finished = "force"
+end
+
+function Prompt:command_exit()  -- Control-g, Control-c
     self:after()
     os.exit()
 end
