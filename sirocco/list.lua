@@ -77,13 +77,13 @@ function List:registerKeybinding()
         command_get_next_choice = {
             Prompt.escapeCodes.key_down,
             C "n",
-            "\27[B" -- backup
+            Esc "[B" -- backup
         },
 
         command_get_previous_choice = {
             Prompt.escapeCodes.key_up,
             C "p",
-            "\27[A" -- backup
+            Esc "[A" -- backup
         },
 
         command_select_choice = {

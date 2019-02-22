@@ -4,7 +4,7 @@ local colors = require "term".colors
 local Prompt = require "sirocco.prompt"
 local List   = require "sirocco.list"
 local char   = require "sirocco.char"
-local C, M   = char.C, char.M
+local C, Esc = char.C, char.Esc
 
 local Confirm = Class {
 
@@ -38,13 +38,13 @@ function Confirm:registerKeybinding()
         command_get_next_choice = {
             Prompt.escapeCodes.key_right,
             C "n",
-            "\27[C" -- backup
+            Esc "[C" -- backup
         },
 
         command_get_previous_choice = {
             Prompt.escapeCodes.key_left,
             C "p",
-            "\27[D" -- backup
+            Esc "[D" -- backup
         },
 
         -- TODO: those should be signals

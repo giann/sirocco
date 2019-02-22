@@ -3,4 +3,4 @@
 	url = https://github.com/daurnimator/lua-tui.git
 [submodule "lib/utf8_simple"]
 	path = lib/utf8_simple
-	url = git@github.com:blitmap/lua-utf8-simple
+	url = https://github.com/blitmap/lua-utf8-simple.git
