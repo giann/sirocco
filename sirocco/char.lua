@@ -72,6 +72,19 @@ string.utf8width = function(self)
     return len
 end
 
+string.utf8height = function(self, width)
+    local height = 1
+    for line in self:gmatch("([^\n]*)\n") do
+        height = height + 1
+
+        for _ = width, line:utf8width(), width do
+            height = height + 1
+        end
+    end
+
+    return height
+end
+
 return {
     isC = ctrl_char,
     isM = meta_char,

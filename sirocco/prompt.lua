@@ -171,19 +171,6 @@ function Prompt:insertAtCurrentPosition(text)
         .. self.buffer:utf8sub(self.bufferOffset)
 end
 
-function Prompt.textHeight(text, width)
-    local height = 1
-    for line in text:gmatch("([^\n]*)\n") do
-        height = height + 1
-
-        for _ = 130, Prompt.len(line), width do
-            height = height + 1
-        end
-    end
-
-    return height
-end
-
 -- Necessary because we erase everything each time
 -- and reposition to startingPosition
 function Prompt:getHeight()
@@ -199,7 +186,7 @@ function Prompt:getHeight()
         .. "\n"
         .. (self.message or "message") -- At least something otherwise line is ignored by textHeight
 
-    return Prompt.textHeight(everything, self.terminalWidth)
+    return everything:utf8height(self.terminalWidth)
 end
 
 function Prompt:updateCurrentPosition()

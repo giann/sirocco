@@ -67,7 +67,7 @@ function List:getHeight()
     everything = everything
         .. (self.message or "message") -- At least something otherwise line is ignored by textHeight
 
-    return Prompt.textHeight(everything, self.terminalWidth)
+    return everything:utf8height(self.terminalWidth)
 end
 
 function List:registerKeybinding()

@@ -7,4 +7,5 @@ ignore = {
 globals = {
     "string.utf8sub",
     "string.utf8width",
+    "string.utf8height",
 }
