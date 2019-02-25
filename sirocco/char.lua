@@ -60,9 +60,12 @@ end
 string.utf8sub = require "utf8_simple".sub
 
 string.utf8width = function(self)
+    -- First remove color escape codes
+    local str = self:gsub("\27%[%d+m", "")
+
     local len = 0
 
-    for _, rune in utf8.codes(self) do
+    for _, rune in utf8.codes(str) do
         local l = wcwidth(rune)
         if l >= 0 then
             len = len + l

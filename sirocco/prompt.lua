@@ -305,34 +305,16 @@ function Prompt:render()
     if not self.promptPosition.x or not self.promptPosition.y then
         local x, y = self.startingPosition.x, self.startingPosition.y - 1
         local prompt = self.prompt .. inlinePossibleValues
-        local part
-        -- TODO: yet another way of doing this ?!
-        while utf8.len(prompt) > 0 do
-            part = prompt:utf8sub(1, self.terminalWidth)
-            prompt = prompt:utf8sub(self.terminalWidth + 1)
 
-            y = y + 1
+        local promptHeight = prompt:utf8height(self.terminalWidth)
 
-            for _ in part:gmatch("\n") do
-                y = y + 1
-            end
-        end
-
-        local lastLine = ""
-        local lines = 0
-        -- Maybe the prompt is on several lines
-        for line in part:gmatch("[^\n]*\n(.*)") do
-            lastLine = line
-            lines = lines + 1
-        end
-
-        if lines == 0 then
-            lastLine = self.prompt
-        end
+        local lastLine = prompt:sub(-1) ~= "\n"
+            and prompt:match("([^\n]*)$")
+            or ""
 
         self.promptPosition.x, self.promptPosition.y =
             x + lastLine:utf8width() + (self.showPossibleValues and inlinePossibleValues:utf8width() or 0),
-            y
+            y + promptHeight
     end
 
     self:renderMessage()
