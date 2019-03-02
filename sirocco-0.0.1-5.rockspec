@@ -1,6 +1,6 @@
 
 package = "sirocco"
-version = "0.0.1-4"
+version = "0.0.1-5"
 rockspec_format = "3.0"
 
 source = {
@@ -35,8 +35,10 @@ build = {
 }
 
 dependencies = {
-    "lua >= 5.3",
+    "lua >= 5.1",
     "lua-term >= 0.7-1",
     "hump >= 0.4-2",
-    "wcwidth >= 0.3-1"
+    "wcwidth >= 0.3-1",
+    "compat53 >= 0.7-1",
+    "bit32 >= 5.2.0-1"
 }

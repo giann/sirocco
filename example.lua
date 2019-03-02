@@ -1,4 +1,4 @@
-package.path = package.path .. ";./lib/tui/?/init.lua;./lib/tui/?.lua;./lib/utf8_simple/?.lua"
+package.path = package.path .. ";./lib/tui/?/init.lua;./lib/tui/?.lua;./lib/utf8_simple/?.lua;./?/init.lua"
 
 local sirocco   = require "sirocco"
 local Prompt    = sirocco.prompt

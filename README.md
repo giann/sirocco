@@ -14,7 +14,7 @@ A collection of interactive command line prompts for Lua
 ## Installing
 
 Requirements:
-- Lua 5.3
+- Lua 5.1/JIT/5.2/5.3
 - luarocks >= 3.0 (_Note: `hererocks -rlatest` will install 2.4, you need to specify it with `-r3.0`_)
 
 ```bash

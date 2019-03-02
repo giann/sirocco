@@ -1,3 +1,5 @@
+require "compat53"
+
 local Class     = require "hump.class"
 local winsize   = require "sirocco.winsize"
 local char      = require "sirocco.char"

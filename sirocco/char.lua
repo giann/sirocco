@@ -1,6 +1,11 @@
 local wcwidth = require "wcwidth"
 local filters = require "tui.filters"
 
+local bit32 = require "bit32"
+local band  = bit32.band
+local bor   = bit32.bor
+local bnot  = bit32.bnot
+
 -- Overwrite default filter to add utf8
 filters.default_chain = filters.make_chain {
     -- Always before CSI
@@ -27,7 +32,7 @@ local meta_character_bit          = 0x080 -- x0000000, must be on.
 local largest_char                = 255   -- Largest character value.
 
 local function ctrl_char(c)
-    return c < control_character_threshold and (c & 0x80) == 0
+    return c < control_character_threshold and band(c, 0x80) == 0
 end
 
 local function meta_char(c)
@@ -36,12 +41,12 @@ end
 
 
 local function ctrl(c)
-    return string.char(c:byte() & control_character_mask)
+    return string.char(band(c:byte(), control_character_mask))
 end
 
 -- Nobody really has a Meta key, use Esc instead
 local function meta(c)
-    return string.char(c:byte() | meta_character_bit)
+    return string.char(bor(c:byte(), meta_character_bit))
 end
 
 local function Esc(c)
@@ -49,11 +54,11 @@ local function Esc(c)
 end
 
 local function unMeta(c)
-    return string.char(c:byte() & (~meta_character_bit))
+    return string.char(band(c:byte(), bnot(meta_character_bit)))
 end
 
 local function unCtrl(c)
-    return string.upper(string.char(c:byte() | control_character_bit))
+    return string.upper(string.char(bor(c:byte(), control_character_bit)))
 end
 
 -- Utf8 aware sub
